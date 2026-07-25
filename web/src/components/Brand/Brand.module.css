@@ -1,0 +1,57 @@
+.brand {
+  display: flex;
+  width: fit-content;
+  flex-shrink: 0;
+  flex-direction: row;
+  align-items: center;
+}
+
+.mark {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-white);
+  color: var(--color-ink);
+  font-family: var(--font-heading);
+  font-weight: var(--font-weight-extrabold);
+}
+
+.wordmark {
+  color: var(--color-on-dark);
+  font-family: var(--font-heading);
+  font-weight: var(--font-weight-extrabold);
+  white-space: nowrap;
+}
+
+/* ---- Sizes ------------------------------------------------------------ */
+
+.sm {
+  gap: 8px;
+}
+
+.sm .mark {
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-xs);
+  font-size: 17px;
+}
+
+.sm .wordmark {
+  font-size: 19px;
+}
+
+.lg {
+  gap: 9px;
+}
+
+.lg .mark {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  font-size: 19px;
+}
+
+.lg .wordmark {
+  font-size: 22px;
+}

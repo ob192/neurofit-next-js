@@ -1,0 +1,23 @@
+.section {
+  --section-gap: 24px;
+  --section-padding: 40px var(--gutter);
+
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--section-gap);
+  padding: var(--section-padding);
+}
+
+.light {
+  background: var(--color-bg);
+}
+
+.lilac {
+  background: var(--color-surface-lilac);
+}
+
+.deep {
+  background: var(--color-primary-deep);
+}

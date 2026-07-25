@@ -1,0 +1,141 @@
+.header {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.eyebrow {
+  color: var(--color-accent);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 1.5px;
+}
+
+.titleRow {
+  display: flex;
+  width: 100%;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+}
+
+.titleIcon {
+  display: flex;
+  flex-shrink: 0;
+  color: var(--color-primary);
+}
+
+.heading {
+  color: var(--color-heading);
+  font-family: var(--font-heading);
+  font-size: 30px;
+  font-weight: var(--font-weight-extrabold);
+}
+
+.handle {
+  color: var(--color-primary);
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: var(--font-weight-semibold);
+}
+
+/* ---- Gallery ---------------------------------------------------------- */
+
+.gallery {
+  display: grid;
+  width: 100%;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.tile {
+  position: relative;
+  height: 108px;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  background: var(--color-border);
+}
+
+.tileInner {
+  object-fit: cover;
+  object-position: center;
+}
+
+/* ---- Subscribe CTA ---------------------------------------------------- */
+
+.subscribe {
+  display: flex;
+  width: 100%;
+  flex-shrink: 0;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px;
+  border-radius: var(--radius-2xl);
+  background: var(--color-ink);
+  color: var(--color-white);
+  font-family: var(--font-heading);
+  font-size: 16px;
+  font-weight: var(--font-weight-bold);
+  transition: filter var(--transition-fast);
+}
+
+.subscribe:hover {
+  filter: brightness(1.25);
+}
+
+/* ---- Reviews ---------------------------------------------------------- */
+
+.reviewsHeading {
+  color: var(--color-heading);
+  font-family: var(--font-heading);
+  font-size: 20px;
+  font-weight: var(--font-weight-bold);
+}
+
+.quotes {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.quote {
+  display: flex;
+  width: 100%;
+  margin: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 18px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-2xl);
+  background: var(--color-surface);
+}
+
+.stars {
+  color: var(--color-ink);
+  font-size: 14px;
+  letter-spacing: 1px;
+}
+
+.quoteText {
+  width: 100%;
+  margin: 0;
+  color: var(--color-heading);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 23px;
+}
+
+.quoteAuthor {
+  color: var(--color-muted);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: var(--font-weight-semibold);
+}

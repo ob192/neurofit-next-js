@@ -1,0 +1,21 @@
+.list {
+  display: flex;
+  width: 100%;
+  flex-flow: row wrap;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.tag {
+  display: flex;
+  width: fit-content;
+  flex-shrink: 0;
+  padding: 6px 12px;
+  border-radius: var(--radius-2xl);
+  background: var(--color-surface-lilac);
+  color: var(--color-primary);
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: var(--font-weight-semibold);
+  white-space: nowrap;
+}

@@ -1,0 +1,35 @@
+.widget {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 20px;
+}
+
+.step {
+  display: flex;
+  width: 100%;
+  flex-shrink: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.stepLabel {
+  color: var(--color-heading);
+  font-family: var(--font-heading);
+  font-size: 13px;
+  font-weight: var(--font-weight-bold);
+}
+
+.hint {
+  width: 100%;
+  padding: 18px 16px;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-xl);
+  background: var(--color-surface);
+  color: var(--color-muted);
+  font-family: var(--font-body);
+  font-size: 13.5px;
+  text-align: center;
+}

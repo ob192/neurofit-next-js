@@ -1,0 +1,11 @@
+/*
+ * The shell is a flex column with `align-items: flex-start`, so <main> has to
+ * claim the full width explicitly — otherwise it shrink-wraps its content and
+ * the section backgrounds stop reaching the edges.
+ */
+.main {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: flex-start;
+}

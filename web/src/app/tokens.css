@@ -1,0 +1,88 @@
+/*
+ * Design tokens extracted from the original Pencil export.
+ *
+ * The source HTML inlined every value as a Tailwind arbitrary class
+ * (bg-[#6D28A8], text-[13.5px]/[normal], rounded-[11px] ...). Naming them here
+ * is what makes the per-component CSS modules readable: a module says
+ * `background: var(--color-primary)` instead of repeating a hex.
+ */
+
+:root {
+  /* ---- Brand purples -------------------------------------------------- */
+  --color-primary: #6d28a8; /* selected states, primary surfaces */
+  --color-primary-deep: #4a1a73; /* WhyEMS section, booking summary, footer top */
+  --color-primary-bright: #7b2fb0; /* hero gradient end */
+  --color-primary-darkest: #2a0f45; /* footer gradient end */
+  --color-accent: #8b45c4; /* eyebrows, "open hours" hint */
+
+  /* ---- Neutrals ------------------------------------------------------- */
+  --color-ink: #1c1226; /* near-black: buttons, dark surfaces */
+  --color-heading: #241b2e; /* headings and primary body text */
+  --color-muted: #6b6478; /* secondary body text */
+  --color-white: #ffffff;
+
+  /* ---- Tinted surfaces ------------------------------------------------ */
+  --color-bg: #fbf9fe; /* page background */
+  --color-surface: #ffffff; /* cards */
+  --color-surface-lilac: #f1e9fa; /* booking/media sections, tags, hour chips */
+  --color-border: #e7def3; /* card borders; also the "disabled text" tone */
+
+  /* ---- On-dark text --------------------------------------------------- */
+  --color-on-dark: #f4eefb; /* primary text on purple */
+  --color-on-dark-muted: #b79bd6; /* secondary text on purple */
+  --color-on-dark-soft: #d8c6ee; /* footer tagline */
+  --color-on-dark-body: #e4d6f5; /* hero subheading */
+
+  /* ---- Translucent overlays (on the hero/footer gradients) ------------ */
+  --overlay-8: #ffffff14;
+  --overlay-10: #ffffff1a;
+  --overlay-13: #ffffff22;
+  --overlay-14: #ffffff24;
+  --overlay-18: #ffffff2e;
+  --overlay-20: #ffffff33;
+  --overlay-12: #ffffff1f;
+  --overlay-primary-8: #6d28a814;
+
+  /* ---- Gradients ------------------------------------------------------ */
+  --gradient-hero: linear-gradient(
+    169.283deg,
+    var(--color-primary-deep) 5.693%,
+    var(--color-primary-bright) 94.307%
+  );
+  --gradient-footer: linear-gradient(
+    -165.167deg,
+    var(--color-primary-deep) 7.843%,
+    var(--color-primary-darkest) 92.157%
+  );
+
+  /* ---- Typography ----------------------------------------------------- */
+  /* --font-heading / --font-body are injected by next/font in layout.tsx */
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --font-weight-extrabold: 800;
+
+  /* ---- Radii ---------------------------------------------------------- */
+  --radius-xs: 9px;
+  --radius-sm: 11px;
+  --radius-md: 12px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+  --radius-2xl: 20px;
+  --radius-pill: 999px;
+
+  /* ---- Layout --------------------------------------------------------- */
+  --shell-width: 390px;
+  --gutter: 20px;
+
+  /* ---- Motion --------------------------------------------------------- */
+  --transition-fast: 120ms ease;
+  --transition-base: 180ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --transition-fast: 0ms;
+    --transition-base: 0ms;
+  }
+}

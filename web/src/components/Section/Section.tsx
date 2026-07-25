@@ -1,0 +1,50 @@
+import type { CSSProperties, ReactNode } from 'react';
+import styles from './Section.module.css';
+
+type Tone = 'light' | 'lilac' | 'deep';
+
+type SectionProps = {
+  id?: string;
+  tone?: Tone;
+  /** Vertical rhythm between direct children. Matches the export's `gap-[Npx]`. */
+  gap?: number;
+  /** Section padding shorthand, e.g. '40px 20px'. */
+  padding?: string;
+  className?: string;
+  'aria-labelledby'?: string;
+  children: ReactNode;
+};
+
+/**
+ * The shared vertical band every landing section sits in. The original export
+ * repeated the same flex-column + padding + background triplet on each
+ * `Section/*` div; this centralises it and leaves only the genuinely unique
+ * styling to each feature's own module.
+ */
+export function Section({
+  id,
+  tone = 'light',
+  gap,
+  padding,
+  className,
+  children,
+  ...rest
+}: SectionProps) {
+  const classes = [styles.section, styles[tone], className].filter(Boolean).join(' ');
+
+  return (
+    <section
+      id={id}
+      className={classes}
+      style={
+        {
+          ...(gap !== undefined ? { '--section-gap': `${gap}px` } : {}),
+          ...(padding ? { '--section-padding': padding } : {}),
+        } as CSSProperties
+      }
+      aria-labelledby={rest['aria-labelledby']}
+    >
+      {children}
+    </section>
+  );
+}

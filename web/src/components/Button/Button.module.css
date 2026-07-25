@@ -1,0 +1,46 @@
+.button {
+  display: flex;
+  height: fit-content;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px 20px;
+  border-radius: var(--radius-lg);
+  font-family: var(--font-heading);
+  font-size: 15px;
+  font-weight: var(--font-weight-bold);
+  text-align: center;
+  transition:
+    transform var(--transition-fast),
+    filter var(--transition-fast);
+}
+
+.fullWidth {
+  width: 100%;
+}
+
+.white {
+  background: var(--color-white);
+  color: var(--color-ink);
+}
+
+.ink {
+  background: var(--color-ink);
+  color: var(--color-white);
+}
+
+.button:hover {
+  filter: brightness(0.96);
+}
+
+.button:active {
+  transform: scale(0.99);
+}
+
+.button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+  filter: none;
+  transform: none;
+}

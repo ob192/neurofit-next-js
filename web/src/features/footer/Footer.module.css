@@ -1,0 +1,141 @@
+.footer {
+  display: flex;
+  width: 100%;
+  flex-shrink: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 22px;
+  padding: 36px var(--gutter) 28px;
+  background: var(--gradient-footer);
+}
+
+.tagline {
+  width: 100%;
+  color: var(--color-on-dark-soft);
+  font-family: var(--font-body);
+  font-size: 13.5px;
+  line-height: 21px;
+}
+
+/* ---- Contacts --------------------------------------------------------- */
+
+.contacts {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.contact {
+  display: flex;
+  width: 100%;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+}
+
+.contactIcon {
+  display: flex;
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  background: var(--overlay-8);
+  color: var(--color-white);
+}
+
+.contactText {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.contactCaption {
+  color: var(--color-on-dark-muted);
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: var(--font-weight-semibold);
+}
+
+.contactValue {
+  color: var(--color-on-dark);
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: var(--font-weight-semibold);
+}
+
+.contactLink:hover {
+  text-decoration: underline;
+}
+
+/* ---- CTA -------------------------------------------------------------- */
+
+.cta {
+  display: flex;
+  width: 100%;
+  flex-shrink: 0;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 15px var(--gutter);
+  border-radius: var(--radius-lg);
+  background: var(--color-white);
+  color: var(--color-ink);
+  font-family: var(--font-heading);
+  font-size: 15px;
+  font-weight: var(--font-weight-bold);
+  transition: filter var(--transition-fast);
+}
+
+.cta:hover {
+  filter: brightness(0.96);
+}
+
+/* ---- Social ----------------------------------------------------------- */
+
+.social {
+  display: flex;
+  width: 100%;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.socialLink {
+  display: flex;
+  width: 42px;
+  height: 42px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--overlay-14);
+  border-radius: var(--radius-md);
+  background: var(--overlay-8);
+  color: var(--color-on-dark);
+  transition: background var(--transition-fast);
+}
+
+.socialLink:hover {
+  background: var(--overlay-20);
+}
+
+/* ---- Foot ------------------------------------------------------------- */
+
+.divider {
+  width: 100%;
+  height: 1px;
+  margin: 0;
+  border: 0;
+  background: var(--overlay-12);
+}
+
+.copyright {
+  width: 100%;
+  color: var(--color-on-dark-muted);
+  font-family: var(--font-body);
+  font-size: 11.5px;
+}
