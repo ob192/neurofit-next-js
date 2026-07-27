@@ -114,5 +114,11 @@ studio instead.
 
 ## More context
 
-- `docs/ENGINEERING.md` — architecture and design rationale
-- `docs/CURRENT_STATE.md` — what's done, what's mocked, what blocks launch
+- `docs/ARCHITECTURE.md` — how it's built and why
+- `docs/CONCESSIONS.md` — every deliberate deviation and its cost to undo
+- `docs/CURRENT_STATE.md` — what's done, what's mocked, known bugs, launch blockers
+
+There are three known bugs in the calendar's edge behaviour (seed window shorter
+than the booking horizon, beyond-horizon days mislabelled `past`, unbounded
+forward month navigation). They're described in `docs/CURRENT_STATE.md` — check
+there before "fixing" something that's already logged.
