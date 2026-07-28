@@ -1,13 +1,42 @@
 .section {
   --section-gap: 24px;
-  --section-padding: 40px var(--gutter);
+  --section-pad-y: 40px;
 
   display: flex;
   width: 100%;
   flex-direction: column;
   align-items: flex-start;
   gap: var(--section-gap);
-  padding: var(--section-padding);
+  padding-block: var(--section-pad-y);
+  /*
+   * Full-bleed background, centred content, no wrapper element. The inline
+   * padding is whichever is larger: the gutter, or the slack left once
+   * --content-max is taken out of the section's width. Below --content-max the
+   * max() collapses to the gutter, so phones are unaffected.
+   *
+   * Sections needing a narrower measure (prose, forms) override --content-max
+   * on themselves — it is read here, not where it is set.
+   */
+  padding-inline: max(var(--gutter), calc((100% - var(--content-max)) / 2));
+}
+
+/*
+ * Gap and padding scale as multiples rather than fixed values, because each
+ * section passes its own phone-width figure via inline custom properties. A
+ * flat `gap: 32px` here would silently discard those.
+ */
+@media (min-width: 768px) {
+  .section {
+    gap: calc(var(--section-gap) * 1.25);
+    padding-block: calc(var(--section-pad-y) * 1.5);
+  }
+}
+
+@media (min-width: 1024px) {
+  .section {
+    gap: calc(var(--section-gap) * 1.5);
+    padding-block: calc(var(--section-pad-y) * 2);
+  }
 }
 
 .light {

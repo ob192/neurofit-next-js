@@ -7,6 +7,18 @@
   gap: 22px;
   padding: 36px var(--gutter) 28px;
   background: var(--gradient-footer);
+  /* Same reason as the hero: the default purple ring is invisible here. */
+  --focus-ring: var(--color-white);
+}
+
+/* Matches the footer's own gap, so wrapping these two changes nothing on a
+   phone — it exists purely to give the grid a single identity cell. */
+.identity {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 22px;
 }
 
 .tagline {
@@ -70,6 +82,40 @@
 
 .contactLink:hover {
   text-decoration: underline;
+}
+
+.contactExtra {
+  position: relative;
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  gap: 5px;
+  margin-top: 5px;
+  padding: 6px 10px;
+  border: 1px solid var(--overlay-18);
+  border-radius: var(--radius-pill);
+  background: var(--overlay-10);
+  color: var(--color-on-dark);
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: var(--font-weight-semibold);
+  transition: background var(--transition-fast);
+}
+
+.contactExtra:hover {
+  background: var(--overlay-20);
+}
+
+/* Reaches the 44px minimum without inflating the footer's vertical rhythm —
+   the address above it isn't interactive, so the overlap costs nothing. */
+.contactExtra::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 0;
+  left: 0;
+  height: max(100%, var(--tap-target));
+  transform: translateY(-50%);
 }
 
 /* ---- CTA -------------------------------------------------------------- */
@@ -138,4 +184,61 @@
   color: var(--color-on-dark-muted);
   font-family: var(--font-body);
   font-size: 11.5px;
+}
+
+/* ---- Tablet / desktop -------------------------------------------------- */
+
+/*
+ * Three columns — identity, contacts, actions — with the divider and copyright
+ * spanning underneath. Uses explicit `grid-row` rather than source order so the
+ * CTA and socials group together on the right without reordering the DOM.
+ */
+@media (min-width: 768px) {
+  .footer {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: start;
+    column-gap: 40px;
+    row-gap: 18px;
+    padding-block: 56px 36px;
+    padding-inline: max(var(--gutter), calc((100% - var(--content-max)) / 2));
+  }
+
+  .identity {
+    grid-row: 1 / span 2;
+    grid-column: 1;
+  }
+
+  .contacts {
+    grid-row: 1 / span 2;
+    grid-column: 2;
+  }
+
+  .cta {
+    grid-row: 1;
+    grid-column: 3;
+    width: 100%;
+  }
+
+  .social {
+    grid-row: 2;
+    grid-column: 3;
+    align-self: start;
+  }
+
+  .divider,
+  .copyright {
+    grid-column: 1 / -1;
+  }
+
+  .divider {
+    margin-top: 18px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .footer {
+    column-gap: 64px;
+    padding-block: 72px 40px;
+  }
 }

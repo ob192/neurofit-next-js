@@ -12,7 +12,7 @@ export function Media() {
       id="media"
       tone="lilac"
       gap={24}
-      padding="48px var(--gutter)"
+      padY={48}
       aria-labelledby="media-heading"
     >
       <header className={styles.header}>
@@ -35,7 +35,7 @@ export function Media() {
               src={tile.src}
               alt={tile.alt}
               fill
-              sizes="120px"
+              sizes="(min-width: 768px) 180px, 33vw"
               className={styles.tileInner}
             />
           </li>

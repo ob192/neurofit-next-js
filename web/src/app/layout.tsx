@@ -42,6 +42,24 @@ export const metadata: Metadata = {
   alternates: {
     canonical: '/',
   },
+  /*
+   * Declared explicitly rather than relying on Next's `app/icon` file
+   * convention, because the set is split across `public/`: the .ico has to
+   * stay at /favicon.ico for the implicit request browsers make before they
+   * have parsed any markup.
+   *
+   * No `image/svg+xml` entry. The generator produced one, but it is a 6.9 MB
+   * 2816x1536 PNG wrapped in an <svg> — browsers prefer SVG over PNG when both
+   * are offered, so shipping it would mean every visit downloads 6.9 MB for a
+   * tab icon. See docs/CONCESSIONS.md §20.
+   */
+  icons: {
+    icon: [
+      { url: '/favicon.ico', sizes: '48x48 32x32', type: 'image/x-icon' },
+      { url: '/favicon-96x96.png', sizes: '96x96', type: 'image/png' },
+    ],
+    apple: [{ url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
+  },
   openGraph: {
     type: 'website',
     locale: site.locale,
@@ -51,7 +69,7 @@ export const metadata: Metadata = {
     description: site.seoDescription,
     images: [
       {
-        url: '/images/hero-ems-studio.png',
+        url: '/images/og-cover.png',
         width: 1200,
         height: 630,
         alt: 'Студія персональних тренувань NeuroFit у Чернігові',
@@ -62,7 +80,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: `${site.name} — EMS-тренування у Чернігові`,
     description: site.seoDescription,
-    images: ['/images/hero-ems-studio.png'],
+    images: ['/images/og-cover.png'],
   },
   robots: {
     index: true,

@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import { Brand } from '@/components/Brand/Brand';
 import { Icon } from '@/components/Icon/Icon';
+import { hero } from '@/content/hero';
 import { site, telHref } from '@/content/site';
 import { services } from '@/content/services';
 import heroImage from '../../../public/images/hero-ems-studio.png';
@@ -11,7 +12,11 @@ export function Hero() {
     <header className={styles.hero}>
       <div className={styles.topBar}>
         <Brand size="sm" />
-        <a className={styles.phonePill} href={telHref}>
+        <a
+          className={styles.phonePill}
+          href={telHref}
+          aria-label={hero.callAriaLabel(site.phone.display)}
+        >
           <Icon name="phone" size={14} />
           <span>{site.phone.display}</span>
         </a>
@@ -24,17 +29,41 @@ export function Hero() {
         </p>
 
         <h1 className={styles.headline}>
-          <span className={styles.headlineTop}>EMS-тренування,</span>
-          <span className={styles.headlineBottom}>Stretching, Бокс</span>
+          <span className={styles.headlineTop}>{hero.headline.top}</span>
+          <span className={styles.headlineBottom}>{hero.headline.bottom}</span>
         </h1>
 
-        <p className={styles.sub}>
-          30 хвилин EMS дають навантаження, порівнянне з 2 годинами у звичайному залі.
-          Швидкий результат із персональним тренером.
+        <p className={styles.sub}>{hero.lead}</p>
+
+        {/* The comparison is the page's strongest argument, so it gets read as
+            two numerals rather than as a sentence. The cells are decorative to
+            assistive tech — `srSummary` carries the actual claim. */}
+        <p className={styles.proof}>
+          <span className="srOnly">{hero.proof.srSummary}</span>
+
+          <span className={styles.proofCell} aria-hidden="true">
+            <span className={styles.proofValue}>
+              {hero.proof.from.value}
+              <span className={styles.proofUnit}>{hero.proof.from.unit}</span>
+            </span>
+            <span className={styles.proofLabel}>{hero.proof.from.label}</span>
+          </span>
+
+          <span className={styles.proofEquals} aria-hidden="true">
+            =
+          </span>
+
+          <span className={styles.proofCell} aria-hidden="true">
+            <span className={styles.proofValue}>
+              {hero.proof.to.value}
+              <span className={styles.proofUnit}>{hero.proof.to.unit}</span>
+            </span>
+            <span className={styles.proofLabel}>{hero.proof.to.label}</span>
+          </span>
         </p>
 
         <a className={styles.cta} href="#booking">
-          <span>Записатися на перше тренування</span>
+          <span>{hero.ctaLabel}</span>
           <Icon name="arrow-right" size={18} />
         </a>
 
@@ -54,7 +83,7 @@ export function Hero() {
           alt="Персональне EMS-тренування у студії NeuroFit"
           fill
           priority
-          sizes="390px"
+          sizes="(min-width: 768px) 50vw, 100vw"
           placeholder="blur"
           className={styles.imageInner}
         />

@@ -1,0 +1,198 @@
+.groups {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.group {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+}
+
+.groupTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-heading);
+  font-family: var(--font-heading);
+  font-size: 17px;
+  line-height: 22px;
+  font-weight: var(--font-weight-bold);
+}
+
+.groupIcon {
+  display: flex;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-xs);
+  background: var(--overlay-primary-8);
+  color: var(--color-primary);
+}
+
+.listLabel {
+  margin-top: 6px;
+  color: var(--color-muted);
+  font-family: var(--font-body);
+  font-size: 11.5px;
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  /* Also the clearance the "best value" badge hangs into — see .badge. */
+  gap: 12px;
+}
+
+/* ---- Row --------------------------------------------------------------- */
+
+.row {
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.rowBest {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+}
+
+.rowText {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.rowName {
+  color: var(--color-heading);
+  font-family: var(--font-heading);
+  font-size: 15px;
+  line-height: 20px;
+  font-weight: var(--font-weight-bold);
+}
+
+.rowMeta {
+  color: var(--color-muted);
+  font-family: var(--font-body);
+  font-size: 11.5px;
+  line-height: 16px;
+}
+
+.rowBest .rowName {
+  color: var(--color-white);
+}
+
+/* Not --color-on-dark-muted: that lands at 3.4:1 on this purple. */
+.rowBest .rowMeta {
+  color: var(--color-on-dark-body);
+}
+
+/* ---- Price ------------------------------------------------------------- */
+
+.price {
+  display: flex;
+  flex-shrink: 0;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.priceValue {
+  color: var(--color-primary);
+  font-family: var(--font-heading);
+  font-size: 26px;
+  line-height: 1;
+  font-weight: var(--font-weight-extrabold);
+  font-variant-numeric: tabular-nums;
+}
+
+.priceCurrency {
+  color: var(--color-muted);
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: var(--font-weight-semibold);
+}
+
+.rowBest .priceValue,
+.rowBest .priceCurrency {
+  color: var(--color-white);
+}
+
+/* ---- Best-value badge -------------------------------------------------- */
+
+.badge {
+  position: absolute;
+  top: -10px;
+  right: 14px;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--color-ink);
+  color: var(--color-white);
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* ---- Tablet / desktop -------------------------------------------------- */
+
+@media (min-width: 768px) {
+  /* EMS and stretching side by side — the whole point of the section is
+     comparing them, which a 2000px-tall stack defeats. */
+  .groups {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+    gap: 40px;
+  }
+
+  .groupTitle {
+    font-size: 19px;
+  }
+
+  /* ButtonLink is full-width by default — right for a phone, absurd at 1120px. */
+  .cta {
+    width: fit-content;
+    padding-inline: 36px;
+  }
+
+  .row {
+    padding: 16px 18px;
+  }
+
+  .rowName {
+    font-size: 16px;
+  }
+
+  .priceValue {
+    font-size: 28px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .groups {
+    gap: 56px;
+  }
+
+  .priceValue {
+    font-size: 30px;
+  }
+}

@@ -236,11 +236,23 @@ generated `robots.txt` and `sitemap.xml` (API routes disallowed).
 `lib/seo/jsonLd.ts` emits one `@graph` with stable `@id`s so nodes
 cross-reference rather than repeating the business three times:
 
-- `Organization` and `WebSite`
-- `HealthAndBeautyBusiness` + `ExerciseGym` — address, phone, seven-day
-  `openingHoursSpecification`, `sameAs` socials, an `OfferCatalog` of the three
-  services, and a `ReserveAction` pointing at `#booking`
+- `Organization` and `WebSite` — the brand and the property
+- `WebPage` — this one document, `isPartOf` the site and `about` the business.
+  It is what carries `primaryImageOfPage`; the FAQ hangs off it rather than off
+  the site
+- `HealthAndBeautyBusiness` + `ExerciseGym` — address, phone, `geo`, `hasMap`
+  pointing at the Google Business Profile, seven-day
+  `openingHoursSpecification`, `sameAs` (the Google listing plus socials), an
+  `OfferCatalog` of the three services, and a `ReserveAction` at `#booking`
 - `FAQPage` with all six questions
+- Two `ImageObject`s — the logo and the hero — referenced by `@id` from
+  wherever they're needed rather than repeated as bare URLs with dimensions
+  that can drift
+
+The rule for adding a node or a property: it must be backed by something on the
+page or by `content/site.ts`. `sameAs` uses the Google listing's canonical
+`?cid=` URL rather than the `share.google` redirector the studio sent, because
+a redirector asserts nothing about identity.
 
 The governing rule: **anything marked up as structured data must be visible in
 the rendered DOM.** See [CONCESSIONS.md](CONCESSIONS.md) for what was left out

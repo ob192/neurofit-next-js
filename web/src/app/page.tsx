@@ -1,9 +1,11 @@
 import { Hero } from '@/features/hero/Hero';
 import { Services } from '@/features/services/Services';
 import { WhyEms } from '@/features/why-ems/WhyEms';
+import { Pricing } from '@/features/pricing/Pricing';
 import { BookingSection } from '@/features/booking/BookingSection';
 import { Media } from '@/features/media/Media';
 import { Faq } from '@/features/faq/Faq';
+import { Location } from '@/features/location/Location';
 import { Footer } from '@/features/footer/Footer';
 import { JsonLd } from '@/lib/seo/JsonLd';
 import { buildJsonLd } from '@/lib/seo/jsonLd';
@@ -30,9 +32,11 @@ export default async function HomePage({ searchParams }: PageProps) {
       <main className={styles.main}>
         <Services />
         <WhyEms />
+        <Pricing />
         <BookingSection preselectedService={service} />
         <Media />
         <Faq />
+        <Location />
       </main>
       <Footer />
     </>

@@ -1,3 +1,12 @@
+/*
+ * Answers are prose, so this section opts out of the 1120px column. Two
+ * columns of accordions would also mean one side jumping every time the other
+ * expands — a single narrow column is the right shape here.
+ */
+.section {
+  --content-max: 860px;
+}
+
 .list {
   display: flex;
   width: 100%;

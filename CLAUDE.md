@@ -36,9 +36,13 @@ The build alone will not catch lint errors.
    `src/content/`. Components read from there.
 5. **The site is Ukrainian.** All UI strings, `aria-label`s and error messages
    are in Ukrainian. No i18n framework — do not add one unprompted.
-6. **Mobile-only, 390px.** This is a deliberate product decision, not an
-   oversight. Do not add desktop breakpoints or a responsive redesign unless
-   asked.
+6. **Two breakpoints, and only two.** 768px (tablet) and 1024px (desktop),
+   written as literals because media queries can't read custom properties.
+   Grep for them before inventing a third. Phone-width layout is the base;
+   everything above it is layered on with `min-width` queries.
+
+   *(This replaced the original mobile-only-390px rule when the desktop and
+   tablet layouts were built. `docs/CONCESSIONS.md` §5 has the history.)*
 
 ## Layout
 

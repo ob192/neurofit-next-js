@@ -1,0 +1,162 @@
+.layout {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/*
+ * The map is a third-party iframe, so it gets a wrapper: the frame owns the
+ * rounding and the border, and the iframe just fills it. Rounding the iframe
+ * directly leaves square corners in engines that don't clip its content box.
+ */
+.frame {
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  background: var(--color-surface);
+}
+
+.map {
+  display: block;
+  width: 100%;
+  /* Aspect ratio rather than a fixed height, so the map keeps its proportions
+     from 320px up to the content cap without a breakpoint of its own. */
+  aspect-ratio: 4 / 3;
+  border: 0;
+}
+
+.rail {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ---- Facts ------------------------------------------------------------- */
+
+.facts {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.fact {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+}
+
+.factIcon {
+  display: flex;
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  background: var(--overlay-primary-8);
+  color: var(--color-primary);
+}
+
+.factText {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.factCaption {
+  color: var(--color-muted);
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: var(--font-weight-semibold);
+}
+
+.factValue {
+  color: var(--color-heading);
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: var(--font-weight-semibold);
+}
+
+/* ---- Actions ----------------------------------------------------------- */
+
+.actions {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.action {
+  display: flex;
+  min-height: var(--tap-target);
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  /* Narrower inline padding than the footer's CTA: at tablet the rail is only
+     ~260px wide and "Відкрити в Google Картах" wraps to two lines at a full
+     gutter, which breaks the pair's shared height. */
+  padding: 13px 16px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  color: var(--color-heading);
+  font-family: var(--font-heading);
+  font-size: 15px;
+  font-weight: var(--font-weight-bold);
+  text-align: center;
+  transition:
+    background var(--transition-fast),
+    filter var(--transition-fast);
+}
+
+.action:hover {
+  background: var(--color-bg);
+}
+
+.primary {
+  border-color: transparent;
+  background: var(--color-primary);
+  color: var(--color-white);
+}
+
+.primary:hover {
+  background: var(--color-primary);
+  filter: brightness(1.12);
+}
+
+/* ---- Tablet / desktop --------------------------------------------------- */
+
+/*
+ * Map on the left, the address/hours/actions rail on the right. The rail is
+ * sized in fr rather than a fixed width so it can't outgrow the map on a
+ * narrow tablet.
+ */
+@media (min-width: 768px) {
+  .layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+    align-items: center;
+    gap: 32px;
+  }
+
+  .map {
+    aspect-ratio: 16 / 11;
+  }
+}
+
+@media (min-width: 1024px) {
+  .layout {
+    grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr);
+    gap: 48px;
+  }
+
+  .map {
+    aspect-ratio: 16 / 9;
+  }
+}

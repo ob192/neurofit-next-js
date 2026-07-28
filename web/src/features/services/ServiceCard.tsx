@@ -12,7 +12,7 @@ export function ServiceCard({ service }: { service: Service }) {
           src={service.image.src}
           alt={service.image.alt}
           fill
-          sizes="390px"
+          sizes="(min-width: 1024px) 360px, (min-width: 768px) 50vw, 100vw"
           className={styles.photoInner}
         />
       </div>
