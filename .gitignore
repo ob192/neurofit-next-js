@@ -1,5 +1,9 @@
 # Secrets — never commit
 .env
+# GCP service-account key. Holds a private key; grant access to the service
+# account in the GTM/GA4 UIs instead of sharing this file.
+service-account.json
+*-service-account.json
 # Next's per-developer overrides. NEXT_PUBLIC_SITE_URL lives here locally; on a
 # deploy it must come from the hosting platform's environment instead.
 .env*.local

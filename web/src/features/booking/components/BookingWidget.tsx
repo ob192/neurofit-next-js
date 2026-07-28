@@ -1,7 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import type { ServiceId } from '@/content/services';
+import { getService, type ServiceId } from '@/content/services';
+import { pushEvent } from '@/lib/analytics/gtm';
 import type {
   DayAvailabilityDetail,
   IsoDate,
@@ -249,6 +250,23 @@ export function BookingWidget({
         ...(comment ? { comment } : {}),
       });
       setStatus('success');
+
+      /*
+       * The site's one real conversion. Pushed only after the API accepted the
+       * booking, so a 409 or a validation failure never counts as a lead.
+       *
+       * Note what is absent: name, phone and comment. Those go to the booking
+       * API and nowhere else — the dataLayer is readable by every tag in the
+       * container, and sending personal data to Analytics breaks Google's
+       * terms as well as being the wrong thing to do.
+       */
+      pushEvent({
+        event: 'booking_submitted',
+        service_id: serviceId,
+        service_name: getService(serviceId)?.name ?? serviceId,
+        booking_date: selectedDate,
+        booking_time: selectedTime,
+      });
 
       // Re-read availability so the just-booked slot shows as taken.
       const [day, monthData] = await Promise.all([
