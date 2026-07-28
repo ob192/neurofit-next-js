@@ -174,13 +174,31 @@ export function BookingWidget({
     setFailedKeys((current) => (current.size === 0 ? current : new Set()));
   }, []);
 
+  /*
+   * Funnel steps. Fired on the user's own selections only — not on the
+   * server-preselected service from `?service=`, which would inflate the top
+   * of the funnel with choices nobody made.
+   */
+  const trackStep = useCallback(
+    (step: 'service' | 'date' | 'time', service: ServiceId) => {
+      pushEvent({
+        event: 'booking_step',
+        booking_step: step,
+        service_id: service,
+        service_name: getService(service)?.name ?? service,
+      });
+    },
+    [],
+  );
+
   const handleServiceChange = useCallback(
     (next: ServiceId) => {
       setServiceId(next);
       clearTime();
       clearErrors();
+      trackStep('service', next);
     },
-    [clearTime, clearErrors],
+    [clearTime, clearErrors, trackStep],
   );
 
   const handleMonthChange = useCallback(
@@ -198,8 +216,17 @@ export function BookingWidget({
       setSelectedDate(date);
       clearTime();
       clearErrors();
+      trackStep('date', serviceId);
     },
-    [clearTime, clearErrors],
+    [clearTime, clearErrors, trackStep, serviceId],
+  );
+
+  const handleSelectTime = useCallback(
+    (time: Time) => {
+      setSelectedTime(time);
+      trackStep('time', serviceId);
+    },
+    [trackStep, serviceId],
   );
 
   const handleSelectHour = useCallback((hour: number) => {
@@ -322,7 +349,7 @@ export function BookingWidget({
             selectedTime={selectedTime}
             loading={dayLoading}
             onSelectHour={handleSelectHour}
-            onSelectTime={setSelectedTime}
+            onSelectTime={handleSelectTime}
           />
         ) : (
           <p className={styles.hint}>Спочатку оберіть дату у календарі.</p>

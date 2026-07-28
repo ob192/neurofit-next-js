@@ -5,16 +5,18 @@ import { hero } from '@/content/hero';
 import { site, telHref } from '@/content/site';
 import { services } from '@/content/services';
 import heroImage from '../../../public/images/hero-ems-studio.png';
+import { cta, trackSection } from '@/lib/analytics/gtm';
 import styles from './Hero.module.css';
 
 export function Hero() {
   return (
-    <header className={styles.hero}>
+    <header className={styles.hero} {...trackSection('hero')}>
       <div className={styles.topBar}>
         <Brand size="sm" />
         <a
           className={styles.phonePill}
           href={telHref}
+          {...cta('hero-call')}
           aria-label={hero.callAriaLabel(site.phone.display)}
         >
           <Icon name="phone" size={14} />
@@ -62,7 +64,7 @@ export function Hero() {
           </span>
         </p>
 
-        <a className={styles.cta} href="#booking">
+        <a className={styles.cta} href="#booking" {...cta('hero-book')}>
           <span>{hero.ctaLabel}</span>
           <Icon name="arrow-right" size={18} />
         </a>

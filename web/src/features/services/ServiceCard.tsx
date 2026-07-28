@@ -2,6 +2,7 @@ import Image from 'next/image';
 import { Icon } from '@/components/Icon/Icon';
 import { Tag, TagList } from '@/components/Tag/Tag';
 import type { Service } from '@/content/services';
+import { cta } from '@/lib/analytics/gtm';
 import styles from './Services.module.css';
 
 export function ServiceCard({ service }: { service: Service }) {
@@ -33,7 +34,11 @@ export function ServiceCard({ service }: { service: Service }) {
           service already picked, so the CTA works with JavaScript disabled and
           the `#booking` hash still scrolls to the right place.
         */}
-        <a className={styles.cardCta} href={`/?service=${service.id}#booking`}>
+        <a
+          className={styles.cardCta}
+          href={`/?service=${service.id}#booking`}
+          {...cta(`service-book-${service.id}`)}
+        >
           <span>Записатися</span>
           <Icon name="arrow-right" size={16} />
           <span className="srOnly">на {service.name}</span>

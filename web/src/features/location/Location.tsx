@@ -3,6 +3,7 @@ import { SectionHeader } from '@/components/SectionHeader/SectionHeader';
 import { Icon } from '@/components/Icon/Icon';
 import { site } from '@/content/site';
 import { location } from '@/content/location';
+import { cta } from '@/lib/analytics/gtm';
 import styles from './Location.module.css';
 
 /**
@@ -71,6 +72,7 @@ export function Location() {
             <a
               className={`${styles.action} ${styles.primary}`}
               href={site.google.directions}
+              {...cta('location-directions')}
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -80,6 +82,7 @@ export function Location() {
             <a
               className={styles.action}
               href={site.google.place}
+              {...cta('location-open-maps')}
               target="_blank"
               rel="noopener noreferrer"
             >

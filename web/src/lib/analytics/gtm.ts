@@ -25,15 +25,54 @@ export const GA4_MEASUREMENT_ID = 'G-DHQ8N6RZ39';
  * inside the container — the dataLayer name describes what happened on the
  * site, the GA4 name is what reports understand.
  */
-export type DataLayerEvent = {
-  event: 'booking_submitted';
-  /** Which service was booked — matches the ids in content/services.ts. */
-  service_id: string;
-  service_name: string;
-  /** YYYY-MM-DD and HH:MM, as the app stores them. */
-  booking_date: string;
-  booking_time: string;
-};
+export type DataLayerEvent =
+  | {
+      event: 'booking_submitted';
+      /** Which service was booked — matches the ids in content/services.ts. */
+      service_id: string;
+      service_name: string;
+      /** YYYY-MM-DD and HH:MM, as the app stores them. */
+      booking_date: string;
+      booking_time: string;
+    }
+  | {
+      /**
+       * Funnel progress inside the booking widget. Four steps, so a drop-off
+       * between "picked a date" and "picked a time" is visible rather than
+       * inferred from a single submit count.
+       */
+      event: 'booking_step';
+      booking_step: 'service' | 'date' | 'time';
+      service_id: string;
+      service_name: string;
+    };
+
+/**
+ * Attribute contract for the parts of the page that are **not** client
+ * components — which is six of the eight sections.
+ *
+ * Rather than converting them to `'use client'` just to attach an onClick,
+ * they carry a `data-analytics` attribute and GTM does the listening. A click
+ * trigger and an element-visibility trigger in the container read these, so
+ * the whole engagement layer costs zero bytes of our JavaScript and the
+ * sections keep shipping none.
+ *
+ * The values are stable identifiers, not CSS classes: CSS Modules hashes class
+ * names per build, so a container keyed on `.Footer-module__x7Kd2__cta` would
+ * break on the next deploy without anything looking wrong.
+ */
+export const ANALYTICS_ATTR = 'data-analytics';
+export const ANALYTICS_SECTION_ATTR = 'data-analytics-section';
+
+/** Marks a clickable element. Spread onto the element: `{...cta('hero-book')}`. */
+export function cta(id: string): Record<string, string> {
+  return { [ANALYTICS_ATTR]: id };
+}
+
+/** Marks a section for the visibility trigger. */
+export function trackSection(id: string): Record<string, string> {
+  return { [ANALYTICS_SECTION_ATTR]: id };
+}
 
 declare global {
   interface Window {

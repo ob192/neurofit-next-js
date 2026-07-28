@@ -1,4 +1,5 @@
 import type { CSSProperties, ReactNode } from 'react';
+import { trackSection } from '@/lib/analytics/gtm';
 import styles from './Section.module.css';
 
 type Tone = 'light' | 'lilac' | 'deep';
@@ -42,6 +43,13 @@ export function Section({
   return (
     <section
       id={id}
+      /*
+       * Section-visibility marker for GTM, derived from the id a section
+       * already has rather than added per feature. Nothing reads it in the app
+       * — the container's element-visibility trigger does — so the sections
+       * stay server-rendered and ship no JavaScript for it.
+       */
+      {...(id ? trackSection(id) : {})}
       className={classes}
       style={
         {

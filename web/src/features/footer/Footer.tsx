@@ -1,6 +1,7 @@
 import { Brand } from '@/components/Brand/Brand';
 import { Icon, type IconName } from '@/components/Icon/Icon';
 import { site, telHref } from '@/content/site';
+import { cta } from '@/lib/analytics/gtm';
 import styles from './Footer.module.css';
 
 const contacts: {
@@ -67,6 +68,7 @@ export function Footer() {
                   <a
                     className={styles.contactExtra}
                     href={contact.extra.href}
+                    {...cta('footer-directions')}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
@@ -80,7 +82,7 @@ export function Footer() {
         })}
       </ul>
 
-      <a className={styles.cta} href={telHref}>
+      <a className={styles.cta} href={telHref} {...cta('footer-call')}>
         <Icon name="phone-call" size={17} />
         <span>Зателефонувати зараз</span>
       </a>
@@ -91,6 +93,7 @@ export function Footer() {
             <a
               className={styles.socialLink}
               href={social.href}
+              {...cta(`footer-social-${social.label.toLowerCase()}`)}
               target="_blank"
               rel="noopener noreferrer"
             >

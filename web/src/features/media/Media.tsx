@@ -4,6 +4,7 @@ import { Icon } from '@/components/Icon/Icon';
 import { site } from '@/content/site';
 import { galleryTiles } from '@/content/gallery';
 import { reviews } from '@/content/reviews';
+import { cta } from '@/lib/analytics/gtm';
 import styles from './Media.module.css';
 
 export function Media() {
@@ -44,6 +45,7 @@ export function Media() {
 
       <a
         className={styles.subscribe}
+        {...cta('media-instagram')}
         href={site.social.instagram}
         target="_blank"
         rel="noopener noreferrer"
