@@ -162,8 +162,11 @@ Ordered by what blocks what.
 4. **Add notification on submit** (email / Telegram / SMS). Currently a
    submitted booking reaches no one.
 5. Fix the three known issues above.
-6. Set `NEXT_PUBLIC_SITE_URL` — canonical URLs and JSON-LD `@id`s currently
-   point at `localhost:3000`.
+6. **Set `NEXT_PUBLIC_SITE_URL` on the host.** It is in `web/.env.local` for
+   local work (`https://neurofit-chernihiv.restreto-labs.com`), but that file
+   is gitignored — the deploy platform needs its own copy. Without it every
+   canonical URL, `og:image` and JSON-LD `@id` falls back to `localhost:3000`,
+   which is why link previews show no image.
 7. Add rate limiting to `POST /api/bookings`; stop `GET /api/bookings` serving
    the schedule anonymously.
 8. Replace Unsplash placeholders with real studio photography. The Open Graph

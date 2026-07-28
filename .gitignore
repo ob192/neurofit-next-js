@@ -1,5 +1,8 @@
 # Secrets — never commit
 .env
+# Next's per-developer overrides. NEXT_PUBLIC_SITE_URL lives here locally; on a
+# deploy it must come from the hosting platform's environment instead.
+.env*.local
 
 # Node
 node_modules/

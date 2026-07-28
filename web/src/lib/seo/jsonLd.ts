@@ -22,7 +22,6 @@ const BUSINESS_ID = `${siteUrl}/#business`;
 const WEBSITE_ID = `${siteUrl}/#website`;
 const WEBPAGE_ID = `${siteUrl}/#webpage`;
 const ORGANIZATION_ID = `${siteUrl}/#organization`;
-const LOGO_ID = `${siteUrl}/#logo`;
 const PRIMARY_IMAGE_ID = `${siteUrl}/#primaryimage`;
 
 type JsonLdNode = Record<string, unknown>;
@@ -33,42 +32,28 @@ const CURRENCY = 'UAH';
  * The two images the graph refers to.
  *
  * `logo` and `image` are different claims and used to point at the same file:
- * `image` is what the business looks like — the hero shot, which is rendered
- * on the page — and `logo` is the brand mark search engines put beside the
- * name. Dimensions are the files' real ones. (`hero-ems-studio.png` is a JPEG
- * despite the extension; that is the file the studio supplied and Next sniffs
- * the content, so the name is cosmetic.)
+ * `image` is what the business looks like — the hero shot, which is rendered on
+ * the page — and `logo` is the brand mark search engines put beside the name.
+ * (`hero-ems-studio.png` is a JPEG despite the extension; that is the file the
+ * studio supplied and Next sniffs the content, so the name is cosmetic.)
  *
- * These are written out **in full at every use site** rather than declared once
- * and referenced as `{ "@id": … }`. A bare `@id` is correct JSON-LD and Google
- * resolves it, but `logo` and `image` are the two properties most often read by
- * validators and scrapers that flatten a node without walking the graph — and
- * to those, `{ "@id": … }` is an object with no `url`, which they report as an
- * invalid type. The `@id` is kept so graph-aware consumers still merge the
- * repeats into one node; the function is the single source, so they cannot
- * drift apart.
+ * Both are plain URL strings wherever they appear. schema.org accepts either a
+ * URL or an ImageObject for these properties, and a URL sidesteps the two ways
+ * an object goes wrong: a bare `{ "@id": … }` reference is invisible to
+ * validators that flatten a node instead of walking the graph, and writing the
+ * ImageObject out in full at each use site repeats ~300 bytes per copy. The one
+ * place that genuinely needs the object form — `primaryImageOfPage`, where
+ * dimensions matter — declares it inline, once.
  */
-function logoImage(): JsonLdNode {
-  const url = `${siteUrl}/web-app-manifest-512x512.png`;
-  return {
-    '@type': 'ImageObject',
-    '@id': LOGO_ID,
-    url,
-    contentUrl: url,
-    width: 512,
-    height: 512,
-    caption: site.name,
-    inLanguage: site.lang,
-  };
-}
+const LOGO_URL = `${siteUrl}/web-app-manifest-512x512.png`;
+const IMAGE_URL = `${siteUrl}/images/hero-ems-studio.png`;
 
 function primaryImage(): JsonLdNode {
-  const url = `${siteUrl}/images/hero-ems-studio.png`;
   return {
     '@type': 'ImageObject',
     '@id': PRIMARY_IMAGE_ID,
-    url,
-    contentUrl: url,
+    url: IMAGE_URL,
+    contentUrl: IMAGE_URL,
     width: 1408,
     height: 768,
     caption: site.description,
@@ -109,8 +94,10 @@ function offerNode(groupTitle: string, item: PriceItem): JsonLdNode {
   const rate = perSessionRate(item);
 
   return {
+    // No `name` here: it was the same string as `itemOffered.name` on every
+    // offer. The Service is where the name belongs — an Offer is the price, and
+    // what it is a price *for* is the thing it points at.
     '@type': 'Offer',
-    name: `${groupTitle} — ${item.name}`,
     price: item.price,
     priceCurrency: CURRENCY,
     availability: 'https://schema.org/InStock',
@@ -143,8 +130,11 @@ function offerNode(groupTitle: string, item: PriceItem): JsonLdNode {
       '@type': 'Service',
       name: `${groupTitle} — ${item.name}`,
       serviceType: groupTitle,
+      // `provider` stays — it is a 40-byte @id reference, and it is what makes
+      // a single Offer attributable when a parser lifts it out of the
+      // catalogue. `areaServed` does not: it was the same city on all twelve,
+      // and the business node it hangs off already declares it.
       provider: { '@id': BUSINESS_ID },
-      areaServed: { '@type': 'City', name: site.address.city },
     },
   };
 }
@@ -181,7 +171,6 @@ function offerCatalogNode(): JsonLdNode {
             description: service.description,
             serviceType: service.name,
             provider: { '@id': BUSINESS_ID },
-            areaServed: { '@type': 'City', name: site.address.city },
           },
         })),
     ],
@@ -205,8 +194,8 @@ function businessNode(): JsonLdNode {
     slogan: site.tagline,
     url: siteUrl,
     telephone: site.phone.e164,
-    image: primaryImage(),
-    logo: logoImage(),
+    image: IMAGE_URL,
+    logo: LOGO_URL,
     priceRange: priceRange(),
     currenciesAccepted: CURRENCY,
     // The site has exactly one language and no locale routing, so this is a
@@ -279,8 +268,8 @@ function organizationNode(): JsonLdNode {
     description: site.description,
     url: siteUrl,
     telephone: site.phone.e164,
-    logo: logoImage(),
-    image: primaryImage(),
+    logo: LOGO_URL,
+    image: IMAGE_URL,
     // The Organization and the studio are the same business seen two ways —
     // the brand, and the place you walk into. Linking them stops a crawler
     // reading the graph as two unrelated entities that share a name.
