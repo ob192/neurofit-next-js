@@ -19,8 +19,8 @@ export function Faq() {
     <Section
       id="faq"
       tone="light"
+      className={styles.section}
       gap={24}
-      padding="48px var(--gutter)"
       aria-labelledby="faq-heading"
     >
       <SectionHeader

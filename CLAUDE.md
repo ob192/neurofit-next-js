@@ -36,9 +36,13 @@ The build alone will not catch lint errors.
    `src/content/`. Components read from there.
 5. **The site is Ukrainian.** All UI strings, `aria-label`s and error messages
    are in Ukrainian. No i18n framework — do not add one unprompted.
-6. **Mobile-only, 390px.** This is a deliberate product decision, not an
-   oversight. Do not add desktop breakpoints or a responsive redesign unless
-   asked.
+6. **Two breakpoints, and only two.** 768px (tablet) and 1024px (desktop),
+   written as literals because media queries can't read custom properties.
+   Grep for them before inventing a third. Phone-width layout is the base;
+   everything above it is layered on with `min-width` queries.
+
+   *(This replaced the original mobile-only-390px rule when the desktop and
+   tablet layouts were built. `docs/CONCESSIONS.md` §5 has the history.)*
 
 ## Layout
 
@@ -114,5 +118,11 @@ studio instead.
 
 ## More context
 
-- `docs/ENGINEERING.md` — architecture and design rationale
-- `docs/CURRENT_STATE.md` — what's done, what's mocked, what blocks launch
+- `docs/ARCHITECTURE.md` — how it's built and why
+- `docs/CONCESSIONS.md` — every deliberate deviation and its cost to undo
+- `docs/CURRENT_STATE.md` — what's done, what's mocked, known bugs, launch blockers
+
+There are three known bugs in the calendar's edge behaviour (seed window shorter
+than the booking horizon, beyond-horizon days mislabelled `past`, unbounded
+forward month navigation). They're described in `docs/CURRENT_STATE.md` — check
+there before "fixing" something that's already logged.

@@ -6,10 +6,17 @@ type Tone = 'light' | 'lilac' | 'deep';
 type SectionProps = {
   id?: string;
   tone?: Tone;
-  /** Vertical rhythm between direct children. Matches the export's `gap-[Npx]`. */
+  /**
+   * Vertical rhythm between direct children, at phone width. Matches the
+   * export's `gap-[Npx]`; the stylesheet scales it up at each breakpoint.
+   */
   gap?: number;
-  /** Section padding shorthand, e.g. '40px 20px'. */
-  padding?: string;
+  /**
+   * Vertical padding at phone width, likewise scaled up per breakpoint.
+   * Horizontal padding is not configurable — it is the gutter/--content-max
+   * calculation in the stylesheet, which every section shares.
+   */
+  padY?: number;
   className?: string;
   'aria-labelledby'?: string;
   children: ReactNode;
@@ -25,7 +32,7 @@ export function Section({
   id,
   tone = 'light',
   gap,
-  padding,
+  padY,
   className,
   children,
   ...rest
@@ -39,7 +46,7 @@ export function Section({
       style={
         {
           ...(gap !== undefined ? { '--section-gap': `${gap}px` } : {}),
-          ...(padding ? { '--section-padding': padding } : {}),
+          ...(padY !== undefined ? { '--section-pad-y': `${padY}px` } : {}),
         } as CSSProperties
       }
       aria-labelledby={rest['aria-labelledby']}

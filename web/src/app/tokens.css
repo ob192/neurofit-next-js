@@ -15,6 +15,12 @@
   --color-primary-darkest: #2a0f45; /* footer gradient end */
   --color-accent: #8b45c4; /* eyebrows, "open hours" hint */
 
+  /* Single energetic accent, reserved for the hero's proof numerals. Amber is
+     4.0:1 against the *lightest* end of the hero gradient — below the 4.5:1
+     body-text floor, so it may only be used at large display sizes (>=24px
+     bold), where 3:1 applies. Do not use it for body copy on purple. */
+  --color-energy: #ffb020;
+
   /* ---- Neutrals ------------------------------------------------------- */
   --color-ink: #1c1226; /* near-black: buttons, dark surfaces */
   --color-heading: #241b2e; /* headings and primary body text */
@@ -72,12 +78,49 @@
   --radius-pill: 999px;
 
   /* ---- Layout --------------------------------------------------------- */
-  --shell-width: 390px;
+  /*
+   * Two breakpoints, and they are the only two. Media queries can't read
+   * custom properties, so 768px and 1024px appear as literals throughout —
+   * grep for them before adding a third.
+   *
+   *   < 768px   phone   single column, edge to edge
+   *   >= 768px  tablet  two-column grids
+   *   >= 1024px desktop three-column grids, split hero
+   *
+   * `--content-max` caps the readable column while section backgrounds stay
+   * full-bleed; `.section` turns it into symmetric padding. Sections that want
+   * a narrower measure (prose, forms) override it locally.
+   */
+  --content-max: 1120px;
   --gutter: 20px;
+  /* WCAG 2.5.5 / Android + iOS agree on 44px as the smallest comfortable
+     tap area. Anything interactive should reach this even when its visual
+     box is smaller. */
+  --tap-target: 44px;
+
+  /* ---- Focus ---------------------------------------------------------- */
+  /* Inherited, so any dark surface can re-point it at a light ring rather
+     than each component re-declaring the whole :focus-visible rule. The
+     purple accent is only ~1.5:1 against the hero gradient — invisible. */
+  --focus-ring: var(--color-accent);
 
   /* ---- Motion --------------------------------------------------------- */
   --transition-fast: 120ms ease;
   --transition-base: 180ms ease;
+}
+
+/* Widening the gutter at each step scales every section's inset at once,
+   because all of them pad with var(--gutter) rather than a literal. */
+@media (min-width: 768px) {
+  :root {
+    --gutter: 32px;
+  }
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --gutter: 40px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -45,7 +45,8 @@ export function BookingSection({ preselectedService }: BookingSectionProps) {
       id="booking"
       tone="lilac"
       gap={20}
-      padding="40px var(--gutter) 44px"
+      padY={40}
+      className={styles.section}
       aria-labelledby="booking-heading"
     >
       <header className={styles.head}>

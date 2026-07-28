@@ -33,3 +33,28 @@
   font-size: 13.5px;
   text-align: center;
 }
+
+/*
+ * From 1024px the four stacked steps become two columns: service + date on the
+ * left, time + contact form on the right. The steps are ordered 1-2-3-form in
+ * the DOM and the grid keeps that reading order column-first, so tab order and
+ * the numbered labels still agree.
+ */
+@media (min-width: 1024px) {
+  .widget {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: start;
+    gap: 28px 32px;
+  }
+
+  .widget > :nth-child(1),
+  .widget > :nth-child(2) {
+    grid-column: 1;
+  }
+
+  .widget > :nth-child(3),
+  .widget > :nth-child(4) {
+    grid-column: 2;
+  }
+}

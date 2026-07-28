@@ -10,7 +10,7 @@ export function WhyEms() {
       id="why-ems"
       tone="deep"
       gap={28}
-      padding="48px var(--gutter)"
+      padY={48}
       aria-labelledby="why-ems-heading"
     >
       <SectionHeader

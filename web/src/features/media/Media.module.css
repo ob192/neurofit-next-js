@@ -139,3 +139,52 @@
   font-size: 13px;
   font-weight: var(--font-weight-semibold);
 }
+
+/* ---- Tablet / desktop -------------------------------------------------- */
+
+@media (min-width: 768px) {
+  .gallery {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .tile {
+    height: 160px;
+  }
+
+  .quotes {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: stretch;
+    gap: 20px;
+  }
+
+  /* The <li> is the grid item; the card inside has to fill it or the three
+     quotes end up ragged. */
+  .quotes > li {
+    display: flex;
+  }
+
+  .quote {
+    height: 100%;
+  }
+
+  .subscribe {
+    width: fit-content;
+    padding-inline: 40px;
+  }
+
+  .heading {
+    font-size: 36px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .tile {
+    height: 180px;
+  }
+
+  .heading {
+    font-size: 42px;
+  }
+}

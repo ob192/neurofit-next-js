@@ -1,3 +1,12 @@
+/*
+ * Narrower than the page column on purpose. The booking flow is a form, and a
+ * 1120px-wide date grid with 1120px-wide inputs is harder to use than a
+ * compact one, not easier.
+ */
+.section {
+  --content-max: 900px;
+}
+
 .head {
   display: flex;
   width: 100%;
@@ -39,4 +48,17 @@
   font-family: var(--font-body);
   font-size: 14px;
   line-height: 21px;
+}
+
+@media (min-width: 768px) {
+  .title {
+    font-size: 38px;
+    line-height: 42px;
+  }
+
+  .desc {
+    max-width: 60ch;
+    font-size: 15px;
+    line-height: 24px;
+  }
 }
