@@ -28,6 +28,7 @@ Everything here is **deliberate**. Unintentional defects live in
 | 18 | Original export kept in the repo | Reference | Trivial |
 | 19 | Map is a keyless Google iframe | No API key | Low |
 | 20 | Generated `favicon.svg` not shipped | 6.9 MB raster | Low |
+| 21 | Analytics ship without a consent banner | Not built | **Blocker** |
 
 ---
 
@@ -337,3 +338,55 @@ somebody at the studio. For one static pin that is a lot of operational surface.
 **Undo.** Swap `site.google.embed` for a keyed
 `https://www.google.com/maps/embed/v1/place?key=…&q=place_id:…` URL. Nothing
 else in `features/location/` changes.
+
+## 21. Analytics ship without a consent banner
+
+**What.** Google Tag Manager (`GTM-PB7X3PL2`) loads on every page and fires GA4
+(`G-DHQ8N6RZ39`) unconditionally. There is no cookie banner and no GTM Consent
+Mode configuration, so `analytics_storage` is granted by default for everyone.
+
+**Why it is listed here.** GA4 sets a first-party identifier and builds a
+per-visitor profile. Under GDPR that needs prior consent for EU visitors, and
+Ukraine's own data-protection law points the same way. The studio serves one
+city, but the site is publicly reachable and the Google Maps iframe
+(§19) already loads Google resources.
+
+**This is the one item in this file that is a launch blocker rather than a
+trade-off.** Everything else here degrades quality; this one carries legal
+exposure.
+
+**Undo / fix.** Two steps, both in the container rather than the code:
+
+1. Add a consent-banner tag (GTM has CMP templates) and enable Consent Mode v2,
+   defaulting `analytics_storage` to `denied`.
+2. Mark the GA4 tags as requiring `analytics_storage`.
+
+No application change is needed — which is the reason GTM is loaded instead of
+`gtag.js` directly.
+
+**Also unhandled.** Local development traffic is counted: the snippet renders in
+every environment. The usual fix is a GA4 internal-traffic filter on the
+developer's IP, or gating the `<Script>` on `NODE_ENV === 'production'`.
+
+## 22. Engagement tracking is markup attributes, not React handlers
+
+**What.** CTA clicks and section visibility are tracked from
+`data-analytics` / `data-analytics-section` attributes in the rendered HTML.
+GTM listens; the app has no click handlers for them.
+
+**Why.** Six of the eight sections are server components that ship no
+JavaScript. Attaching `onClick` for analytics would have meant `'use client'`
+on Hero, Services, Media, Footer and Location — converting the whole page to a
+client bundle to count clicks. The attribute approach keeps that property
+intact and costs nothing at runtime.
+
+**Trade-off.** The contract lives in two places — the attribute in the markup
+and the trigger in the container — and a rename in one silently stops the
+other. The values are therefore stable identifiers, never CSS class names:
+CSS Modules hashes class names per build, so a container keyed on
+`.Footer-module__x7Kd2__cta` would break on the next deploy with nothing
+looking wrong.
+
+The booking funnel is the exception: `BookingWidget` is already a client
+component, so it pushes `booking_step` / `booking_submitted` to the dataLayer
+directly, typed as a union in `lib/analytics/gtm.ts`.

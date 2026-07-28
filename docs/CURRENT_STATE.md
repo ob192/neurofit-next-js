@@ -62,6 +62,23 @@ API, and the page is server-rendered with JSON-LD.
 - [x] Priced `OfferCatalog` built from `content/pricing.ts`, plus a concrete
       `priceRange` — every figure in the markup is rendered in the DOM
 
+**Analytics**
+- [x] GTM `GTM-PB7X3PL2` in `layout.tsx` — snippet in `<head>`, noscript iframe
+      immediately after `<body>`, exactly as Google's install page specifies
+- [x] GA4 `G-DHQ8N6RZ39` configured *in the container*, not in the app
+- [x] Conversion: `booking_submitted` → GA4 `generate_lead`, with service,
+      date and time. No name, phone or comment ever reaches the dataLayer
+- [x] Funnel: `booking_step` (service → date → time) from `BookingWidget`
+- [x] Engagement: `cta_click` (11 marked CTAs), `section_view` (all 8
+      sections), `scroll_depth` at 25/50/75/90 — all driven by markup
+      attributes, so the six server-rendered sections still ship no JavaScript
+- [x] GA4 property: currency USD → **UAH**, event retention 2 → **14 months**,
+      stream `defaultUri` corrected to the live domain
+- [x] Six custom dimensions registered, without which every parameter above is
+      collected but invisible in reports
+- [ ] **No consent banner.** See [CONCESSIONS.md](CONCESSIONS.md) §21 — this is
+      a launch blocker, not a nicety
+
 **Pricing**
 - [x] EMS and stretching price lists, singles + packages, best-value highlighted
 - [ ] **Boxing has no prices.** The studio supplied EMS and stretching only.
@@ -93,10 +110,22 @@ Manually, against a running dev server. There is no automated test suite.
 | Map embed resolves to the studio's own listing, not a nearby pin | Pass |
 | Location section: no overflow at 375/768/1024; both CTAs ≥44px, equal height | Pass |
 | No horizontal overflow at 375px; shell centred at 1166px | Pass |
+| GTM snippet: in `<head>`, noscript 79 bytes after `<body>` | Pass |
+| GA4 `page_view` reaches `/g/collect` with `tid=G-DHQ8N6RZ39` | Pass |
+| `cta_click` fires with correct `cta_id` when a child element is clicked | Pass |
+| `booking_step` reaches GA4 with service/step parameters | Pass |
+| `generate_lead` carries service, date, time — and no personal data | Pass |
+| All 11 CTA and 8 section markers present in the DOM | Pass |
 | Fonts resolve to Montserrat (headings) / Inter (body) | Pass |
 | No console errors; no hydration warnings | Pass |
 
-**Not verified:** real devices, any browser other than Chromium, Lighthouse
+**Not verified:** `scroll_depth` and `section_view`. Both depend on scroll
+events and `IntersectionObserver`, and the automation pane does not composite
+frames — `window.scrollY` moves but no `scroll` event is dispatched and the
+observer never reports. The tags and triggers are confirmed present in the
+published container; the firing itself needs a real browser to check.
+
+Also not verified: real devices, any browser other than Chromium, Lighthouse
 scores, visual pixel-diff against the original export. No screenshots were
 captured — the browser pane was unavailable during the session, so layout was
 verified by DOM measurement instead.
@@ -172,10 +201,12 @@ Ordered by what blocks what.
 8. Replace Unsplash placeholders with real studio photography. The Open Graph
    card would benefit most — it currently composites the logo with a screenshot
    of the page rather than showing the studio.
-9. Add a square-cropped favicon. The supplied artwork is a wide logo
+9. **Add a consent banner and GTM Consent Mode v2** before any real traffic.
+   [CONCESSIONS.md](CONCESSIONS.md) §21.
+10. Add a square-cropped favicon. The supplied artwork is a wide logo
    letterboxed into a square, so it is illegible at 16×16
    ([CONCESSIONS.md](CONCESSIONS.md) §20).
-10. Add tests for `lib/date.ts` and `lib/mock/availability.ts`.
+11. Add tests for `lib/date.ts` and `lib/mock/availability.ts`.
 
 ## Repository
 
