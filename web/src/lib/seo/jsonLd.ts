@@ -30,9 +30,7 @@ type JsonLdNode = Record<string, unknown>;
 const CURRENCY = 'UAH';
 
 /**
- * The two images the graph refers to, as nodes rather than bare URLs so both
- * can be referenced by `@id` from wherever they're needed instead of being
- * repeated with different dimensions each time.
+ * The two images the graph refers to.
  *
  * `logo` and `image` are different claims and used to point at the same file:
  * `image` is what the business looks like — the hero shot, which is rendered
@@ -40,30 +38,42 @@ const CURRENCY = 'UAH';
  * name. Dimensions are the files' real ones. (`hero-ems-studio.png` is a JPEG
  * despite the extension; that is the file the studio supplied and Next sniffs
  * the content, so the name is cosmetic.)
+ *
+ * These are written out **in full at every use site** rather than declared once
+ * and referenced as `{ "@id": … }`. A bare `@id` is correct JSON-LD and Google
+ * resolves it, but `logo` and `image` are the two properties most often read by
+ * validators and scrapers that flatten a node without walking the graph — and
+ * to those, `{ "@id": … }` is an object with no `url`, which they report as an
+ * invalid type. The `@id` is kept so graph-aware consumers still merge the
+ * repeats into one node; the function is the single source, so they cannot
+ * drift apart.
  */
-function imageNodes(): JsonLdNode[] {
-  return [
-    {
-      '@type': 'ImageObject',
-      '@id': LOGO_ID,
-      url: `${siteUrl}/web-app-manifest-512x512.png`,
-      contentUrl: `${siteUrl}/web-app-manifest-512x512.png`,
-      width: 512,
-      height: 512,
-      caption: site.name,
-      inLanguage: site.lang,
-    },
-    {
-      '@type': 'ImageObject',
-      '@id': PRIMARY_IMAGE_ID,
-      url: `${siteUrl}/images/hero-ems-studio.png`,
-      contentUrl: `${siteUrl}/images/hero-ems-studio.png`,
-      width: 1408,
-      height: 768,
-      caption: site.description,
-      inLanguage: site.lang,
-    },
-  ];
+function logoImage(): JsonLdNode {
+  const url = `${siteUrl}/web-app-manifest-512x512.png`;
+  return {
+    '@type': 'ImageObject',
+    '@id': LOGO_ID,
+    url,
+    contentUrl: url,
+    width: 512,
+    height: 512,
+    caption: site.name,
+    inLanguage: site.lang,
+  };
+}
+
+function primaryImage(): JsonLdNode {
+  const url = `${siteUrl}/images/hero-ems-studio.png`;
+  return {
+    '@type': 'ImageObject',
+    '@id': PRIMARY_IMAGE_ID,
+    url,
+    contentUrl: url,
+    width: 1408,
+    height: 768,
+    caption: site.description,
+    inLanguage: site.lang,
+  };
 }
 
 /**
@@ -71,15 +81,11 @@ function imageNodes(): JsonLdNode[] {
  *
  * The Google listing is the canonical `?cid=` URL, not the `share.google`
  * link the studio sent: a redirector tells a crawler nothing about identity.
- * The three social URLs still need verifying before launch — see
- * docs/CONCESSIONS.md §9.
+ *
+ * Only confirmed profiles belong here. `sameAs` is an identity assertion, so a
+ * guessed URL is worse than a missing one — see docs/CONCESSIONS.md §9.
  */
-const SAME_AS = [
-  site.google.place,
-  site.social.instagram,
-  site.social.facebook,
-  site.social.telegram,
-];
+const SAME_AS = [site.google.place, site.social.instagram];
 
 /** Every price rendered by the Pricing section, cheapest first. */
 const allPrices = priceGroups
@@ -184,7 +190,14 @@ function offerCatalogNode(): JsonLdNode {
 
 function businessNode(): JsonLdNode {
   return {
-    '@type': ['HealthAndBeautyBusiness', 'ExerciseGym'],
+    /*
+     * `LocalBusiness` is redundant in schema.org terms — both of the others
+     * inherit from it — but it is listed first on purpose. Plenty of
+     * third-party validators only recognise a fixed handful of types and
+     * report anything else as "unsupported"; leading with the supertype makes
+     * the node legible to them without weakening what it says.
+     */
+    '@type': ['LocalBusiness', 'HealthAndBeautyBusiness', 'ExerciseGym'],
     '@id': BUSINESS_ID,
     name: site.name,
     legalName: site.legalName,
@@ -192,8 +205,8 @@ function businessNode(): JsonLdNode {
     slogan: site.tagline,
     url: siteUrl,
     telephone: site.phone.e164,
-    image: { '@id': PRIMARY_IMAGE_ID },
-    logo: { '@id': LOGO_ID },
+    image: primaryImage(),
+    logo: logoImage(),
     priceRange: priceRange(),
     currenciesAccepted: CURRENCY,
     // The site has exactly one language and no locale routing, so this is a
@@ -266,8 +279,8 @@ function organizationNode(): JsonLdNode {
     description: site.description,
     url: siteUrl,
     telephone: site.phone.e164,
-    logo: { '@id': LOGO_ID },
-    image: { '@id': PRIMARY_IMAGE_ID },
+    logo: logoImage(),
+    image: primaryImage(),
     // The Organization and the studio are the same business seen two ways —
     // the brand, and the place you walk into. Linking them stops a crawler
     // reading the graph as two unrelated entities that share a name.
@@ -302,7 +315,7 @@ function webPageNode(): JsonLdNode {
     inLanguage: site.lang,
     isPartOf: { '@id': WEBSITE_ID },
     about: { '@id': BUSINESS_ID },
-    primaryImageOfPage: { '@id': PRIMARY_IMAGE_ID },
+    primaryImageOfPage: primaryImage(),
     potentialAction: {
       '@type': 'ReadAction',
       target: [siteUrl],
@@ -352,7 +365,6 @@ export function buildJsonLd(): JsonLdNode {
       webPageNode(),
       businessNode(),
       faqNode(),
-      ...imageNodes(),
     ],
   };
 }

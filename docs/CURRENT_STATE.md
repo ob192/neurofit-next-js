@@ -137,7 +137,7 @@ Full rationale for each in [CONCESSIONS.md](CONCESSIONS.md).
 | Instagram gallery | Six static Unsplash photos, not the real feed |
 | Service card images | Unsplash placeholders from the export |
 | Reviews | Placeholder testimonials (rendered, not marked up) |
-| Social links | Instagram confirmed; Facebook and Telegram still guessed |
+| Social links | Instagram only. The guessed Facebook/Telegram URLs were removed |
 | Address | Confirmed against the Google Business Profile |
 | Phone | From the design; still unverified |
 | Trainers, pricing, memberships | Not in the design, not built |
@@ -148,8 +148,10 @@ Ordered by what blocks what.
 
 1. **Studio reviews the five drafted FAQ answers** (`content/faq.ts`,
    `faqNeedsReview`). They ship as structured data and make medical claims.
-2. **Confirm phone and the Facebook / Telegram URLs** in `content/site.ts`.
-   Both socials are guesses and are published as `sameAs`. The address no
+2. **Confirm the phone number** in `content/site.ts`. Socials no longer need
+   confirming — the guessed Facebook and Telegram URLs were removed rather
+   than published as `sameAs` ([CONCESSIONS.md](CONCESSIONS.md) §9), and
+   Instagram is confirmed. The address no
    longer needs confirming — the Google Business Profile the studio supplied
    lists "проспект Перемоги, 119А, Чернігів, Чернігівська область, 14000",
    which matches `site.address` field for field. Only the casing differs

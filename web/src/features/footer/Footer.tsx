@@ -26,10 +26,14 @@ const contacts: {
   { icon: 'clock-9', caption: 'Графік роботи', value: site.hours.display },
 ];
 
+/*
+ * Instagram is the only account the studio has confirmed. Still a list so
+ * restoring another is a one-line change — but the buttons now carry a visible
+ * label rather than a bare glyph: a single 42px icon square on its own read as
+ * an orphan next to the full-width call CTA.
+ */
 const socials: { icon: IconName; label: string; href: string }[] = [
   { icon: 'instagram', label: 'Instagram', href: site.social.instagram },
-  { icon: 'facebook', label: 'Facebook', href: site.social.facebook },
-  { icon: 'send', label: 'Telegram', href: site.social.telegram },
 ];
 
 export function Footer() {
@@ -90,7 +94,10 @@ export function Footer() {
               target="_blank"
               rel="noopener noreferrer"
             >
-              <Icon name={social.icon} size={19} label={social.label} />
+              {/* The label is now visible text, so the icon goes back to
+                  decorative — announcing "Instagram Instagram" otherwise. */}
+              <Icon name={social.icon} size={19} />
+              <span>{social.label}</span>
             </a>
           </li>
         ))}

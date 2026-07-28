@@ -88,10 +88,14 @@ export const site = {
     instagram: 'https://www.instagram.com/neuro_fit_ems_studio/',
     /** Instagram post the studio uses to show how to find the entrance. */
     directions: 'https://www.instagram.com/p/DOGOCjzClqw/',
-    /* NOTE: these two still point at the old `neurofit.cn` handle. Unconfirmed
-       — the studio only supplied the new Instagram. */
-    facebook: 'https://www.facebook.com/neurofit.cn/',
-    telegram: 'https://t.me/neurofit_cn',
+    /*
+     * Instagram is the only social account the studio has confirmed. The
+     * Facebook and Telegram URLs that used to sit here were guessed from the
+     * old `neurofit.cn` handle and were published as `sameAs` — a wrong URL
+     * there actively misinforms search engines about who this business is.
+     * Removed rather than left in place. If the studio supplies real ones, add
+     * them back here and to SAME_AS in lib/seo/jsonLd.ts.
+     */
   },
 } as const;
 

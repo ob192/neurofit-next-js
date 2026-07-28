@@ -16,7 +16,7 @@ Everything here is **deliberate**. Unintentional defects live in
 | 6 | Contact fields invented | Design had none | — |
 | 7 | Hour grid stops at 21:00, not 22:00 | Design was wrong | Low |
 | 8 | Placeholder imagery | No studio assets | Low |
-| 9 | Guessed social URLs | Not supplied | Trivial |
+| 9 | ~~Guessed social URLs~~ — removed | Not supplied | — |
 | 10 | Service CTA does a full page navigation | SSR correctness | Low |
 | 11 | Whole page is `force-dynamic` | Booking needs live data | Medium |
 | 12 | Filled icon paths, not real Lucide strokes | Export format | Medium |
@@ -148,17 +148,28 @@ carried over from the export. The gallery is static — not the real feed.
 Remote images are allow-listed in `next.config.ts`; self-hosting them lets you
 drop that entry. Alt text is already written and Ukrainian.
 
-## 9. Guessed social URLs
+## 9. Guessed social URLs — *resolved by removal*
 
-**What.** `content/site.ts` contains Instagram, Facebook and Telegram URLs
-inferred from the `@neurofit.cn` handle shown in the design.
+**What it was.** `content/site.ts` carried Facebook and Telegram URLs inferred
+from the `@neurofit.cn` handle shown in the design, because the design drew
+three social buttons and only one destination was ever supplied.
 
-**Why.** Only the handle was given; the footer had three social buttons needing
-destinations.
+**Why it mattered.** Both were emitted as `sameAs` in the JSON-LD. `sameAs` is
+an identity assertion — "these profiles are this business" — so a guessed URL
+does not merely fail to help, it tells search engines something false about who
+the business is. A missing profile is a gap; a wrong one is misinformation.
 
-**Risk.** These are emitted as `sameAs` in the JSON-LD, where a wrong URL
-actively misinforms search engines about the business's identity. Verify before
-launch.
+**Where it landed.** Both removed, from `content/site.ts`, the footer and
+`SAME_AS` in `lib/seo/jsonLd.ts`. Instagram — the one account the studio
+confirmed — is all that ships.
+
+The footer's social buttons changed shape as a result: they were 42px
+icon-only squares, which works for a row of three and reads as an orphan for
+one. They now carry a visible label beside the glyph.
+
+**Undo.** Add the real URLs to `site.social`, then to the `socials` list in
+`Footer.tsx` and to `SAME_AS`. Do not add a profile that has not been
+confirmed by the studio.
 
 ## 10. The service CTA does a full page navigation
 
