@@ -3,30 +3,34 @@ export type GalleryTile = {
   alt: string;
 };
 
-/** The 2x3 Instagram preview grid in the Media section. */
+/**
+ * The 2x3 Instagram preview grid in the Media section.
+ * Photos are studio originals, compressed to WebP in `public/images/gallery/`.
+ * The full set lives there; swap any `src` below to re-curate the grid.
+ */
 export const galleryTiles: readonly GalleryTile[] = [
   {
-    src: 'https://images.unsplash.com/photo-1694856677238-07fe09f6e31a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w4NDM0ODN8MHwxfHJhbmRvbXx8fHx8fHx8fDE3ODQ2MjczMTN8&ixlib=rb-4.1.0&q=80&w=1080',
-    alt: 'Тренування у студії NeuroFit',
+    src: '/images/gallery/1-31.webp',
+    alt: 'Групове тренування в залі студії NeuroFit',
   },
   {
-    src: 'https://images.unsplash.com/photo-1704223523318-116d02723c05?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w4NDM0ODN8MHwxfHJhbmRvbXx8fHx8fHx8fDE3ODQ2MjczMTN8&ixlib=rb-4.1.0&q=80&w=1080',
-    alt: 'Персональне заняття з тренером',
+    src: '/images/gallery/1-45.webp',
+    alt: 'Чоловік на TRX-петлях у EMS-костюмі',
   },
   {
-    src: 'https://images.unsplash.com/photo-1734191209425-b552379c0a0d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w4NDM0ODN8MHwxfHJhbmRvbXx8fHx8fHx8fDE3ODQ2MjczMTR8&ixlib=rb-4.1.0&q=80&w=1080',
-    alt: 'Обладнання студії NeuroFit',
+    src: '/images/gallery/1-61.webp',
+    alt: 'Випади в EMS-костюмі під фірмовим освітленням студії',
   },
   {
-    src: 'https://images.unsplash.com/photo-1758274526108-49b7e3fc05aa?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w4NDM0ODN8MHwxfHJhbmRvbXx8fHx8fHx8fDE3ODQ2MjczMTV8&ixlib=rb-4.1.0&q=80&w=1080',
-    alt: 'Розтяжка після тренування',
+    src: '/images/gallery/1-37.webp',
+    alt: 'Присідання з гирею на персональному занятті',
   },
   {
-    src: 'https://images.unsplash.com/photo-1579364046732-c21c2177730d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w4NDM0ODN8MHwxfHJhbmRvbXx8fHx8fHx8fDE3ODQ2MjczMTZ8&ixlib=rb-4.1.0&q=80&w=1080',
-    alt: 'Боксерська підготовка у студії',
+    src: '/images/gallery/img-0629.webp',
+    alt: 'Бокс на лапах із тренером у студії NeuroFit',
   },
   {
-    src: 'https://images.unsplash.com/photo-1548544155-4d3802f93013?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w4NDM0ODN8MHwxfHJhbmRvbXx8fHx8fHx8fDE3ODQ2MjczMTd8&ixlib=rb-4.1.0&q=80&w=1080',
-    alt: 'Атмосфера студії персональних тренувань',
+    src: '/images/gallery/1-4.webp',
+    alt: 'Розтяжка на килимку після тренування',
   },
 ];

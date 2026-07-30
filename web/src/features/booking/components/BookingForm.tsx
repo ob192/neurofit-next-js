@@ -5,6 +5,7 @@ import { Icon } from '@/components/Icon/Icon';
 import { site, telHref } from '@/content/site';
 import { getService } from '@/content/services';
 import type { ServiceId } from '@/content/services';
+import { trainerLabel, type TrainerSelection } from '@/content/trainers';
 import type { IsoDate, Time } from '../types';
 import { formatDayMonth } from '@/lib/date';
 import styles from './BookingForm.module.css';
@@ -13,15 +14,17 @@ export type SubmitStatus = 'idle' | 'submitting' | 'success' | 'error';
 
 type BookingFormProps = {
   serviceId: ServiceId;
+  trainer: TrainerSelection;
   date: IsoDate | null;
   time: Time | null;
   name: string;
   phone: string;
+  email: string;
   comment: string;
   status: SubmitStatus;
   errorMessage: string | null;
   fieldErrors: Record<string, string>;
-  onFieldChange: (field: 'name' | 'phone' | 'comment', value: string) => void;
+  onFieldChange: (field: 'name' | 'phone' | 'email' | 'comment', value: string) => void;
   onSubmit: () => void;
   onReset: () => void;
 };
@@ -36,10 +39,12 @@ type BookingFormProps = {
  */
 export function BookingForm({
   serviceId,
+  trainer,
   date,
   time,
   name,
   phone,
+  email,
   comment,
   status,
   errorMessage,
@@ -52,12 +57,16 @@ export function BookingForm({
   const service = getService(serviceId);
   const complete = Boolean(date && time);
 
+  // Only surface the trainer in the summary once one is actually chosen.
+  const who = trainer === 'any' ? '' : ` · ${trainerLabel(trainer)}`;
+  const head = `${service?.shortName ?? ''}${who}`;
+
   const summary = complete
-    ? `${service?.shortName ?? ''} · ${formatDayMonth(date as IsoDate)} · ${time}`
+    ? `${head} · ${formatDayMonth(date as IsoDate)} · ${time}`
     : date
       ? // A date is already picked (the server preselects the soonest one), so
         // prompt for the step that's actually outstanding.
-        `${service?.shortName ?? ''} · ${formatDayMonth(date)} · оберіть час`
+        `${head} · ${formatDayMonth(date)} · оберіть час`
       : 'Оберіть дату та час';
 
   if (status === 'success') {
@@ -142,6 +151,30 @@ export function BookingForm({
           {fieldErrors.phone ? (
             <span id={`${fieldId}-phone-error`} className={styles.fieldError}>
               {fieldErrors.phone}
+            </span>
+          ) : null}
+        </div>
+
+        <div className={styles.field}>
+          <label className="srOnly" htmlFor={`${fieldId}-email`}>
+            Email (необов’язково)
+          </label>
+          <input
+            id={`${fieldId}-email`}
+            className={`${styles.input} ${fieldErrors.email ? styles.inputError : ''}`}
+            type="email"
+            name="email"
+            inputMode="email"
+            autoComplete="email"
+            placeholder="Email (необов’язково)"
+            value={email}
+            onChange={(event) => onFieldChange('email', event.target.value)}
+            aria-invalid={Boolean(fieldErrors.email)}
+            aria-describedby={fieldErrors.email ? `${fieldId}-email-error` : undefined}
+          />
+          {fieldErrors.email ? (
+            <span id={`${fieldId}-email-error`} className={styles.fieldError}>
+              {fieldErrors.email}
             </span>
           ) : null}
         </div>

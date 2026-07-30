@@ -50,10 +50,37 @@
   line-height: 21px;
 }
 
+/* Practical "what to bring" note — reassurance, so it reads as a chip, not body copy. */
+.note {
+  display: flex;
+  width: fit-content;
+  flex-shrink: 0;
+  flex-direction: row;
+  align-items: center;
+  gap: 7px;
+  margin-top: 2px;
+  padding: 7px 12px;
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  color: var(--color-heading);
+  font-family: var(--font-body);
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.note svg {
+  flex-shrink: 0;
+  color: var(--color-primary);
+}
+
 @media (min-width: 768px) {
   .title {
     font-size: 38px;
     line-height: 42px;
+  }
+
+  .note {
+    font-size: 13.5px;
   }
 
   .desc {

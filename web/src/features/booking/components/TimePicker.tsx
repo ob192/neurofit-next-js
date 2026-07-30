@@ -17,11 +17,11 @@ type TimePickerProps = {
 };
 
 /**
- * Step 3 — pick an hour, then a 10-minute start inside it.
+ * Step 4 — pick an hour, then a start time inside it.
  *
- * The two-level shape comes straight from the design and is genuinely useful
- * here: a flat list of every 10-minute start between 07:00 and 22:00 would be
- * 90 chips.
+ * The two-level shape comes straight from the design: the hour grid narrows the
+ * choice first, then the minute grid shows the actual bookable starts within it
+ * (Altegio offers 30-minute slots, so at most :00 and :30 per hour).
  */
 export function TimePicker({
   availability,
@@ -94,7 +94,7 @@ export function TimePicker({
           <div className={styles.micro}>
             <div className={styles.microHead}>
               <Icon name="timer" size={14} />
-              <span>{pad2(selectedHour)}:00 — оберіть час, крок 10 хв</span>
+              <span>{pad2(selectedHour)}:00 — оберіть час</span>
             </div>
 
             <div className={styles.microGrid} role="group" aria-label="Оберіть час">

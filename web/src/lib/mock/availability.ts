@@ -7,6 +7,7 @@ import type {
   Slot,
 } from '@/features/booking/types';
 import type { ServiceId } from '@/content/services';
+import type { TrainerSelection } from '@/content/trainers';
 import { allSlotTimes, bookedTimesFor, BOOKING_HORIZON_DAYS } from './store';
 import { daysInMonth, studioToday, toIsoDate } from '@/lib/date';
 
@@ -30,6 +31,9 @@ function horizonEnd(today: IsoDate): IsoDate {
 export function getMonthAvailability(
   serviceId: ServiceId,
   month: MonthKey,
+  // The mock has no per-trainer schedule; it echoes the selection so the shape
+  // matches the Altegio provider and the client's stale-data checks line up.
+  trainer: TrainerSelection = 'any',
 ): MonthAvailability {
   const today = studioToday();
   const lastBookable = horizonEnd(today);
@@ -56,12 +60,13 @@ export function getMonthAvailability(
     });
   }
 
-  return { month, serviceId, days };
+  return { month, serviceId, trainer, days };
 }
 
 export function getDayAvailability(
   serviceId: ServiceId,
   date: IsoDate,
+  trainer: TrainerSelection = 'any',
 ): DayAvailabilityDetail {
   const today = studioToday();
   const taken = bookedTimesFor(serviceId, date);
@@ -72,7 +77,7 @@ export function getDayAvailability(
     available: !isPast && !taken.has(time),
   }));
 
-  return { date, serviceId, slots };
+  return { date, serviceId, trainer, slots };
 }
 
 /** First date in the month that can actually be booked, if any. */

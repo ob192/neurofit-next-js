@@ -1,4 +1,5 @@
 import type { ServiceId } from '@/content/services';
+import type { TrainerSelection } from '@/content/trainers';
 
 /** A calendar date in `YYYY-MM-DD`, always interpreted in the studio's local time. */
 export type IsoDate = string;
@@ -27,6 +28,8 @@ export type DayAvailability = {
 export type MonthAvailability = {
   month: MonthKey;
   serviceId: ServiceId;
+  /** Which trainer this availability is for. `'any'` is the union of all trainers. */
+  trainer: TrainerSelection;
   days: DayAvailability[];
 };
 
@@ -39,6 +42,7 @@ export type Slot = {
 export type DayAvailabilityDetail = {
   date: IsoDate;
   serviceId: ServiceId;
+  trainer: TrainerSelection;
   slots: Slot[];
 };
 
@@ -56,10 +60,13 @@ export type Booking = {
 /** Payload accepted by POST /api/bookings. */
 export type BookingRequest = {
   serviceId: string;
+  /** Selected trainer, or `'any'` to let the studio assign one. */
+  trainer: string;
   date: string;
   time: string;
   name: string;
   phone: string;
+  email?: string;
   comment?: string;
 };
 

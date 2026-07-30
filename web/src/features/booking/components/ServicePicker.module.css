@@ -50,3 +50,23 @@
 .selected:hover {
   border-color: var(--color-primary);
 }
+
+/*
+ * A format that isn't open for online booking. Washed out to the same
+ * `--color-border` the calendar uses for unavailable days, so "you can't pick
+ * this" reads the same way everywhere in the widget.
+ */
+.disabled {
+  cursor: not-allowed;
+  border-color: var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-border);
+}
+
+.disabled .label {
+  color: var(--color-border);
+}
+
+.disabled:hover {
+  border-color: var(--color-border);
+}
