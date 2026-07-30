@@ -8,6 +8,11 @@ service-account.json
 # deploy it must come from the hosting platform's environment instead.
 .env*.local
 
+# Camera originals from the studio shoot (~375 MB of JPGs). The compressed
+# WebP derivatives in web/public/images/gallery/ are what the site serves and
+# what belongs in git; keep the masters in cloud storage, not in history.
+studio-photos/
+
 # Node
 node_modules/
 npm-debug.log*
