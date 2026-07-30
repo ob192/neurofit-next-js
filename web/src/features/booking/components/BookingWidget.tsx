@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { getService, type ServiceId } from '@/content/services';
+import type { TrainerSelection } from '@/content/trainers';
 import { pushEvent } from '@/lib/analytics/gtm';
 import type {
   DayAvailabilityDetail,
@@ -17,6 +18,7 @@ import {
   submitBooking,
 } from '../api';
 import { ServicePicker } from './ServicePicker';
+import { TrainerPicker } from './TrainerPicker';
 import { Calendar } from './Calendar';
 import { TimePicker } from './TimePicker';
 import { BookingForm, type SubmitStatus } from './BookingForm';
@@ -24,6 +26,7 @@ import styles from './BookingWidget.module.css';
 
 export type BookingWidgetProps = {
   serviceId: ServiceId;
+  trainer: TrainerSelection;
   month: MonthKey;
   monthAvailability: MonthAvailability;
   selectedDate: IsoDate | null;
@@ -39,11 +42,12 @@ export type BookingWidgetProps = {
  * component, already rendered into the HTML. It only talks to the API when the
  * user actually changes something — which is also why the fetch effects below
  * compare against the *data* rather than firing on mount: the initial props are
- * already the answer for the initial (service, month, date) triple, so there is
- * nothing to re-fetch until one of them moves.
+ * already the answer for the initial (service, trainer, month, date) tuple, so
+ * there is nothing to re-fetch until one of them moves.
  */
 export function BookingWidget({
   serviceId: initialServiceId,
+  trainer: initialTrainer,
   month: initialMonth,
   monthAvailability: initialMonthAvailability,
   selectedDate: initialDate,
@@ -51,6 +55,7 @@ export function BookingWidget({
   minMonth,
 }: BookingWidgetProps) {
   const [serviceId, setServiceId] = useState<ServiceId>(initialServiceId);
+  const [trainer, setTrainer] = useState<TrainerSelection>(initialTrainer);
   const [month, setMonth] = useState<MonthKey>(initialMonth);
   const [monthAvailability, setMonthAvailability] = useState<MonthAvailability | null>(
     initialMonthAvailability,
@@ -72,24 +77,27 @@ export function BookingWidget({
 
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
   const [comment, setComment] = useState('');
   const [status, setStatus] = useState<SubmitStatus>('idle');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
-  const monthKey = `month:${serviceId}:${month}`;
-  const dayKey = `day:${serviceId}:${selectedDate ?? ''}`;
+  const monthKey = `month:${serviceId}:${trainer}:${month}`;
+  const dayKey = `day:${serviceId}:${trainer}:${selectedDate ?? ''}`;
 
   const monthIsStale =
     monthAvailability === null ||
     monthAvailability.month !== month ||
-    monthAvailability.serviceId !== serviceId;
+    monthAvailability.serviceId !== serviceId ||
+    monthAvailability.trainer !== trainer;
 
   const dayIsStale =
     selectedDate !== null &&
     (dayAvailability === null ||
       dayAvailability.date !== selectedDate ||
-      dayAvailability.serviceId !== serviceId);
+      dayAvailability.serviceId !== serviceId ||
+      dayAvailability.trainer !== trainer);
 
   /*
    * "Loading" is derived, not stored: data that doesn't match the current
@@ -110,11 +118,11 @@ export function BookingWidget({
 
     const controller = new AbortController();
 
-    fetchMonthAvailability(serviceId, month, controller.signal)
+    fetchMonthAvailability(serviceId, trainer, month, controller.signal)
       .then((data) => {
         setMonthAvailability(data);
-        // If the currently-selected date isn't bookable for this service or
-        // month any more, drop it rather than leaving a stale summary.
+        // If the currently-selected date isn't bookable for this service,
+        // trainer or month any more, drop it rather than leaving a stale summary.
         setSelectedDate((current) => {
           if (current === null) return null;
           const stillValid = data.days.some(
@@ -134,7 +142,7 @@ export function BookingWidget({
       });
 
     return () => controller.abort();
-  }, [serviceId, month, monthIsStale, monthKey, failedKeys, markFailed]);
+  }, [serviceId, trainer, month, monthIsStale, monthKey, failedKeys, markFailed]);
 
   /* ---- Day availability ------------------------------------------------ */
   useEffect(() => {
@@ -142,7 +150,7 @@ export function BookingWidget({
 
     const controller = new AbortController();
 
-    fetchDayAvailability(serviceId, selectedDate, controller.signal)
+    fetchDayAvailability(serviceId, trainer, selectedDate, controller.signal)
       .then(setDayAvailability)
       .catch((error: unknown) => {
         if (controller.signal.aborted) return;
@@ -155,7 +163,7 @@ export function BookingWidget({
       });
 
     return () => controller.abort();
-  }, [serviceId, selectedDate, dayIsStale, dayKey, failedKeys, markFailed]);
+  }, [serviceId, trainer, selectedDate, dayIsStale, dayKey, failedKeys, markFailed]);
 
   /* ---- Handlers -------------------------------------------------------- */
 
@@ -201,6 +209,17 @@ export function BookingWidget({
     [clearTime, clearErrors, trackStep],
   );
 
+  const handleTrainerChange = useCallback(
+    (next: TrainerSelection) => {
+      setTrainer(next);
+      // The picked date may not be free for the new trainer; the month refetch
+      // that changing `trainer` triggers will drop it if so. Reset the time here.
+      clearTime();
+      clearErrors();
+    },
+    [clearTime, clearErrors],
+  );
+
   const handleMonthChange = useCallback(
     (next: MonthKey) => {
       setMonth(next);
@@ -235,9 +254,10 @@ export function BookingWidget({
   }, []);
 
   const handleFieldChange = useCallback(
-    (field: 'name' | 'phone' | 'comment', value: string) => {
+    (field: 'name' | 'phone' | 'email' | 'comment', value: string) => {
       if (field === 'name') setName(value);
       if (field === 'phone') setPhone(value);
+      if (field === 'email') setEmail(value);
       if (field === 'comment') setComment(value);
       // Clear that field's error as soon as the user edits it.
       setFieldErrors((current) => {
@@ -254,6 +274,7 @@ export function BookingWidget({
     setStatus('idle');
     setName('');
     setPhone('');
+    setEmail('');
     setComment('');
     setFieldErrors({});
     clearErrors();
@@ -270,10 +291,12 @@ export function BookingWidget({
     try {
       await submitBooking({
         serviceId,
+        trainer,
         date: selectedDate,
         time: selectedTime,
         name,
         phone,
+        ...(email ? { email } : {}),
         ...(comment ? { comment } : {}),
       });
       setStatus('success');
@@ -282,9 +305,9 @@ export function BookingWidget({
        * The site's one real conversion. Pushed only after the API accepted the
        * booking, so a 409 or a validation failure never counts as a lead.
        *
-       * Note what is absent: name, phone and comment. Those go to the booking
-       * API and nowhere else — the dataLayer is readable by every tag in the
-       * container, and sending personal data to Analytics breaks Google's
+       * Note what is absent: name, phone, email and comment. Those go to the
+       * booking API and nowhere else — the dataLayer is readable by every tag in
+       * the container, and sending personal data to Analytics breaks Google's
        * terms as well as being the wrong thing to do.
        */
       pushEvent({
@@ -297,8 +320,8 @@ export function BookingWidget({
 
       // Re-read availability so the just-booked slot shows as taken.
       const [day, monthData] = await Promise.all([
-        fetchDayAvailability(serviceId, selectedDate),
-        fetchMonthAvailability(serviceId, month),
+        fetchDayAvailability(serviceId, trainer, selectedDate),
+        fetchMonthAvailability(serviceId, trainer, month),
       ]);
       setDayAvailability(day);
       setMonthAvailability(monthData);
@@ -310,66 +333,88 @@ export function BookingWidget({
         // Someone took the slot first — refresh so the UI shows it as gone.
         if (error.code === 'slot_taken') {
           setSelectedTime(null);
-          void fetchDayAvailability(serviceId, selectedDate).then(setDayAvailability);
+          void fetchDayAvailability(serviceId, trainer, selectedDate).then(
+            setDayAvailability,
+          );
         }
       } else {
         setErrorMessage('Не вдалося надіслати заявку. Спробуйте ще раз.');
       }
     }
-  }, [serviceId, selectedDate, selectedTime, name, phone, comment, month]);
+  }, [serviceId, trainer, selectedDate, selectedTime, name, phone, email, comment, month]);
 
   /* ---- Render ---------------------------------------------------------- */
 
   return (
     <div className={styles.widget}>
-      <div className={styles.step}>
-        <h3 className={styles.stepLabel}>1 · Послуга</h3>
-        <ServicePicker value={serviceId} onChange={handleServiceChange} />
-      </div>
+      {/*
+       * The two column wrappers are `display: contents` below 1024px, so on
+       * phones the steps stay direct children of the flex column and read
+       * 1-2-3-4-form. From 1024px they become real columns, each flowing
+       * independently — which is what keeps the form tucked under the trainer
+       * picker instead of being stranded below the taller calendar column.
+       */}
+      <div className={styles.colChoice}>
+        <div className={styles.step}>
+          <h3 className={styles.stepLabel}>1 · Послуга</h3>
+          <ServicePicker value={serviceId} onChange={handleServiceChange} />
+        </div>
 
-      <div className={styles.step}>
-        <h3 className={styles.stepLabel}>2 · Дата</h3>
-        <Calendar
-          month={month}
-          availability={monthAvailability}
-          selectedDate={selectedDate}
-          minMonth={minMonth}
-          loading={monthLoading}
-          onMonthChange={handleMonthChange}
-          onSelectDate={handleSelectDate}
-        />
-      </div>
+        <div className={styles.step}>
+          <h3 className={styles.stepLabel}>2 · Тренер</h3>
+          <TrainerPicker value={trainer} onChange={handleTrainerChange} />
+        </div>
 
-      <div className={styles.step}>
-        <h3 className={styles.stepLabel}>3 · Час</h3>
-        {selectedDate ? (
-          <TimePicker
-            availability={dayAvailability}
-            selectedHour={selectedHour}
-            selectedTime={selectedTime}
-            loading={dayLoading}
-            onSelectHour={handleSelectHour}
-            onSelectTime={handleSelectTime}
+        <div className={styles.formSlot}>
+          <BookingForm
+            serviceId={serviceId}
+            trainer={trainer}
+            date={selectedDate}
+            time={selectedTime}
+            name={name}
+            phone={phone}
+            email={email}
+            comment={comment}
+            status={status}
+            errorMessage={errorMessage}
+            fieldErrors={fieldErrors}
+            onFieldChange={handleFieldChange}
+            onSubmit={() => void handleSubmit()}
+            onReset={handleReset}
           />
-        ) : (
-          <p className={styles.hint}>Спочатку оберіть дату у календарі.</p>
-        )}
+        </div>
       </div>
 
-      <BookingForm
-        serviceId={serviceId}
-        date={selectedDate}
-        time={selectedTime}
-        name={name}
-        phone={phone}
-        comment={comment}
-        status={status}
-        errorMessage={errorMessage}
-        fieldErrors={fieldErrors}
-        onFieldChange={handleFieldChange}
-        onSubmit={() => void handleSubmit()}
-        onReset={handleReset}
-      />
+      <div className={styles.colSchedule}>
+        <div className={styles.step}>
+          <h3 className={styles.stepLabel}>3 · Дата</h3>
+          <Calendar
+            month={month}
+            availability={monthAvailability}
+            selectedDate={selectedDate}
+            minMonth={minMonth}
+            loading={monthLoading}
+            onMonthChange={handleMonthChange}
+            onSelectDate={handleSelectDate}
+          />
+        </div>
+
+        <div className={styles.step}>
+          <h3 className={styles.stepLabel}>4 · Час</h3>
+          {selectedDate ? (
+            <TimePicker
+              availability={dayAvailability}
+              selectedHour={selectedHour}
+              selectedTime={selectedTime}
+              loading={dayLoading}
+              onSelectHour={handleSelectHour}
+              onSelectTime={handleSelectTime}
+            />
+          ) : (
+            <p className={styles.hint}>Спочатку оберіть дату у календарі.</p>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

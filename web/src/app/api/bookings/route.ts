@@ -1,8 +1,9 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { isServiceId } from '@/content/services';
-import { createBooking, listBookings } from '@/lib/mock/store';
+import { isBookableServiceId, isServiceId } from '@/content/services';
+import { isTrainerSelection } from '@/content/trainers';
+import { createBooking, isLiveBookingBackend } from '@/lib/booking';
+import { listBookings } from '@/lib/mock/store';
 import { isValidIsoDate, isValidTime, studioToday } from '@/lib/date';
-import { SLOT_STEP_MINUTES } from '@/lib/mock/store';
 import type { ApiError, BookingRequest } from '@/features/booking/types';
 
 export const dynamic = 'force-dynamic';
@@ -10,12 +11,22 @@ export const dynamic = 'force-dynamic';
 /**
  * GET /api/bookings?service=ems&date=2026-07-24
  *
- * Lists bookings held in the mock store. Both filters are optional.
- *
- * Note this is intentionally open in the mock — a real implementation must not
- * expose other clients' names and phone numbers to an unauthenticated caller.
+ * Debug/demo listing of bookings in the in-memory mock. Not available against
+ * the live backend: the public Altegio API can't list appointments (that needs
+ * a business-user token), and exposing clients' contact details to an
+ * unauthenticated caller would be wrong regardless.
  */
 export function GET(request: NextRequest) {
+  if (isLiveBookingBackend()) {
+    return NextResponse.json<ApiError>(
+      {
+        error: 'Перелік записів недоступний.',
+        code: 'not_supported',
+      },
+      { status: 501 },
+    );
+  }
+
   const params = request.nextUrl.searchParams;
   const service = params.get('service');
   const date = params.get('date');
@@ -51,11 +62,21 @@ export function GET(request: NextRequest) {
   });
 }
 
+// A loose email check — enough to catch typos without rejecting valid addresses.
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 function validate(body: Partial<BookingRequest>): Record<string, string> {
   const fields: Record<string, string> = {};
 
   if (!body.serviceId || !isServiceId(body.serviceId)) {
     fields.serviceId = 'Оберіть послугу.';
+  } else if (!isBookableServiceId(body.serviceId)) {
+    // The widget greys these out; this stops a hand-crafted request too.
+    fields.serviceId = 'Онлайн-запис на цю послугу тимчасово недоступний.';
+  }
+
+  if (!body.trainer || !isTrainerSelection(body.trainer)) {
+    fields.trainer = 'Оберіть тренера.';
   }
 
   if (!body.date || !isValidIsoDate(body.date)) {
@@ -66,11 +87,6 @@ function validate(body: Partial<BookingRequest>): Record<string, string> {
 
   if (!body.time || !isValidTime(body.time)) {
     fields.time = 'Оберіть час.';
-  } else {
-    const minutes = Number(body.time.slice(3));
-    if (minutes % SLOT_STEP_MINUTES !== 0) {
-      fields.time = `Час має бути кратним ${SLOT_STEP_MINUTES} хвилинам.`;
-    }
   }
 
   const name = body.name?.trim() ?? '';
@@ -84,15 +100,27 @@ function validate(body: Partial<BookingRequest>): Record<string, string> {
     fields.phone = 'Вкажіть коректний номер телефону.';
   }
 
+  // Email is optional, but if given it must look like an email.
+  const email = body.email?.trim() ?? '';
+  if (email && !EMAIL_RE.test(email)) {
+    fields.email = 'Вкажіть коректну електронну пошту.';
+  }
+
   return fields;
 }
+
+const STATUS_BY_CODE: Record<string, number> = {
+  slot_taken: 409,
+  no_staff: 409,
+  invalid_phone: 422,
+  provider_error: 502,
+};
 
 /**
  * POST /api/bookings
  *
- * Records a booking in the in-memory store. On success the slot is immediately
- * unavailable to every subsequent availability query, which is what makes the
- * demo flow believable without a CRM behind it.
+ * Creates a booking through the provider (live Altegio or the mock). On the
+ * live backend this is a real, non-cancellable appointment.
  */
 export async function POST(request: NextRequest) {
   let body: Partial<BookingRequest>;
@@ -116,10 +144,12 @@ export async function POST(request: NextRequest) {
 
   // `validate` already proved each of these is present and well-formed; these
   // checks re-state that for the type system rather than reaching for `!`.
-  const { serviceId, date, time, name, phone, comment } = body;
+  const { serviceId, trainer, date, time, name, phone, email, comment } = body;
   if (
     !serviceId ||
-    !isServiceId(serviceId) ||
+    !isBookableServiceId(serviceId) ||
+    !trainer ||
+    !isTrainerSelection(trainer) ||
     !date ||
     !time ||
     !name ||
@@ -131,35 +161,32 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const booking = createBooking({
+  const result = await createBooking({
     serviceId,
+    trainer,
     date,
     time,
     name: name.trim(),
     phone: phone.trim(),
+    ...(email?.trim() ? { email: email.trim() } : {}),
     ...(comment?.trim() ? { comment: comment.trim() } : {}),
   });
 
-  if (!booking) {
+  if (!result.ok) {
     return NextResponse.json<ApiError>(
       {
-        error: 'Цей час щойно зайняли. Оберіть, будь ласка, інший.',
-        code: 'slot_taken',
+        error: result.message,
+        code: result.code,
+        ...(result.fields ? { fields: result.fields } : {}),
       },
-      { status: 409 },
+      { status: STATUS_BY_CODE[result.code] ?? 502 },
     );
   }
 
   return NextResponse.json(
     {
       ok: true,
-      booking: {
-        id: booking.id,
-        serviceId: booking.serviceId,
-        date: booking.date,
-        time: booking.time,
-        createdAt: booking.createdAt,
-      },
+      booking: { serviceId, trainer, date: result.date, time: result.time },
     },
     { status: 201 },
   );

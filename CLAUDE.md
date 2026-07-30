@@ -24,10 +24,15 @@ The build alone will not catch lint errors.
 
 ## Non-negotiables
 
-1. **No CRM, no database, no external services.** The booking API is
-   intentionally a self-contained in-memory mock. Do not add Altegio, Supabase,
-   Prisma or any provider SDK unless explicitly asked. The root `.env` holds
-   unused Altegio credentials — ignore them; they are not wired to anything.
+1. **No CRM, no database, no unrequested external services.** Do not add
+   Supabase, Prisma or any provider SDK unless explicitly asked. The booking
+   backend **is now wired to Altegio (alteg.io)** — added on the owner's
+   explicit request — but through a plain `fetch` client (`src/lib/altegio/`),
+   **not** an SDK. It is gated by env (`ALTEGIO_PARTNER_TOKEN` +
+   `ALTEGIO_LOCATION_ID` in `web/.env.local`); when those are unset the flow
+   falls back to the in-memory mock (`src/lib/mock/`), so dev and CI still run
+   credential-free. Do not remove the Altegio integration as "unrequested" —
+   see `docs/CONCESSIONS.md` and the "Booking backend" section below.
 2. **No CSS framework.** No Tailwind, no styled-components, no CSS-in-JS.
    One `*.module.css` per component, colocated.
 3. **No new colour/spacing literals.** Add a token to `src/app/tokens.css` and
@@ -70,6 +75,34 @@ Path alias is `@/*` → `src/*`.
 - Prefer a native element over a JS component. The FAQ accordion is
   `<details>`/`<summary>` on purpose; don't "upgrade" it to a client component.
 - Comments explain *why*, not *what*. Match the density of the surrounding file.
+
+## Booking backend
+
+The booking flow has two interchangeable backends behind one provider
+(`src/lib/booking/`). Route handlers and the server-rendered `BookingSection`
+call the provider — never a backend directly.
+
+- **`src/lib/altegio/`** — a typed, server-only `fetch` wrapper over the Altegio
+  *public* booking API (`Bearer {partner_token}`). It can read the catalogue and
+  availability and create bookings; it **cannot** cancel them or list existing
+  appointments (that needs a business-user token we don't hold). Treat a created
+  booking as irreversible via this app.
+- **`src/lib/booking/`** — maps the site's model onto Altegio and picks the
+  backend. Live when env is set, mock otherwise.
+
+Mapping rules (in `src/lib/booking/mapping.ts` + `src/content/trainers.ts`),
+agreed with the owner — don't "correct" them to match the raw Altegio catalogue:
+
+- All three marketing formats (EMS, Стретчинг, **EMS Boxing**) book the **one**
+  Altegio service «Основне тренування» (`12935553`). The chosen format is written
+  into the appointment **comment** (`"EMS Boxing — <client note>"`).
+- Bookable trainers are **Вікторія** and **Аліна** only. Altegio staff **Лідія**
+  (`2879290`) is deliberately excluded — she is not a bookable trainer.
+- Slots are **30 min** (Altegio's grid); the calendar/times come straight from
+  `book_dates`/`book_times`, so it reflects the studio's real schedule.
+
+`GET /api/bookings` returns 501 on the live backend by design (no public listing;
+would leak PII). The mock still serves it for local demos.
 
 ## Things that will bite you
 

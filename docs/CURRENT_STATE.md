@@ -8,14 +8,17 @@ Status snapshot. For *how it works* see [ARCHITECTURE.md](ARCHITECTURE.md); for
 ## Summary
 
 The static `index.html` export has been migrated to a Next.js 16 app in `web/`.
-All seven sections are ported, the booking flow is interactive against a mock
-API, and the page is server-rendered with JSON-LD.
+All seven sections are ported, the booking flow books against the studio's real
+Altegio calendar (with an in-memory mock fallback when unconfigured), and the
+page is server-rendered with JSON-LD.
 
-`npm run build`, `npm run lint` and `npm run typecheck` all pass clean.
+`npm run lint` and `npm run typecheck` pass clean.
 
-> **Not production-ready.** The booking API is a mock: nothing is persisted, and
-> **no one is notified** when a client submits a request. Three known bugs are
-> listed below. See [Before launch](#before-launch).
+> **Live bookings are real.** With Altegio credentials set, a submitted booking
+> creates a genuine, non-cancellable appointment in the studio's calendar. The
+> public API has no cancel endpoint — cancellations go through the Altegio admin
+> UI. Some calendar edge-case bugs (below) remain from the mock era; verify they
+> don't apply to the Altegio-driven calendar before relying on them.
 
 ## Done
 
@@ -159,10 +162,10 @@ Full rationale for each in [CONCESSIONS.md](CONCESSIONS.md).
 
 | Area | Status |
 | --- | --- |
-| Booking persistence | In-memory `Map`. **Lost on server restart.** |
-| Booking notifications | None. Nobody is told a request came in. |
-| Booked slots in the calendar | Fabricated by a seeded PRNG |
-| CRM / Altegio | Not integrated, by request. Root `.env` holds unused vars. |
+| Booking persistence | **Live via Altegio** when configured; in-memory `Map` (lost on restart) as the no-credentials fallback. |
+| Booking notifications | Handled by Altegio on the live backend; none on the mock fallback. |
+| Booked slots in the calendar | **Real** from Altegio `book_dates`/`book_times` when live; seeded PRNG on the mock. |
+| CRM / Altegio | **Integrated** (public booking API, `src/lib/altegio/` + `src/lib/booking/`) on the owner's request. Env-gated: `ALTEGIO_PARTNER_TOKEN` + `ALTEGIO_LOCATION_ID` in `web/.env.local`. Bookings are one-way — the public API cannot cancel them. |
 | Instagram gallery | Six static Unsplash photos, not the real feed |
 | Service card images | Unsplash placeholders from the export |
 | Reviews | Placeholder testimonials (rendered, not marked up) |
@@ -185,11 +188,12 @@ Ordered by what blocks what.
    lists "проспект Перемоги, 119А, Чернігів, Чернігівська область, 14000",
    which matches `site.address` field for field. Only the casing differs
    ("Проспект"/"проспект", "119а"/"119А"); the site keeps the design's form.
-3. **Replace the mock booking API** with a real backend or the studio's
-   provider. Seam:
-   [ARCHITECTURE.md](ARCHITECTURE.md#replacing-it-with-a-real-backend).
-4. **Add notification on submit** (email / Telegram / SMS). Currently a
-   submitted booking reaches no one.
+3. **Set Altegio env on the host.** Add `ALTEGIO_PARTNER_TOKEN` and
+   `ALTEGIO_LOCATION_ID` to the deploy platform's environment (they live in
+   `web/.env.local` for local work, which is gitignored). Without them the site
+   silently falls back to the in-memory mock — bookings would reach no one.
+4. **Confirm booking notifications** are configured studio-side in Altegio
+   (SMS/email to staff and client). The app itself sends nothing extra.
 5. Fix the three known issues above.
 6. **Set `NEXT_PUBLIC_SITE_URL` on the host.** It is in `web/.env.local` for
    local work (`https://neurofit-chernihiv.restreto-labs.com`), but that file

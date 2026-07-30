@@ -18,13 +18,28 @@ export function ServicePicker({ value, onChange }: ServicePickerProps) {
     <div className={styles.row} role="radiogroup" aria-label="Оберіть послугу">
       {services.map((service) => {
         const selected = service.id === value;
+        // Formats the studio hasn't opened for online booking stay visible but
+        // inert, so the offer is still advertised without promising a slot.
+        const disabled = !service.bookable;
         return (
           <button
             key={service.id}
             type="button"
             role="radio"
             aria-checked={selected}
-            className={`${styles.option} ${selected ? styles.selected : ''}`}
+            disabled={disabled}
+            aria-label={
+              disabled
+                ? `${service.shortName} — запис онлайн тимчасово недоступний`
+                : undefined
+            }
+            className={[
+              styles.option,
+              selected ? styles.selected : '',
+              disabled ? styles.disabled : '',
+            ]
+              .filter(Boolean)
+              .join(' ')}
             onClick={() => onChange(service.id)}
           >
             <Icon name={service.icon} size={20} />

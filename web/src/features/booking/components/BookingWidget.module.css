@@ -35,26 +35,47 @@
 }
 
 /*
- * From 1024px the four stacked steps become two columns: service + date on the
- * left, time + contact form on the right. The steps are ordered 1-2-3-form in
- * the DOM and the grid keeps that reading order column-first, so tab order and
- * the numbered labels still agree.
+ * Below 1024px the column wrappers dissolve, so their children are the flex
+ * items of `.widget` and stack in DOM order. That order is 1-2-form-3-4, so the
+ * form is pulled back to the end — the numbered steps must come first.
+ */
+.colChoice,
+.colSchedule {
+  display: contents;
+}
+
+.formSlot {
+  width: 100%;
+  order: 1;
+}
+
+/*
+ * From 1024px the steps become two columns: service + trainer + the contact
+ * form on the left, the calendar and time grid on the right. Each column is its
+ * own flex flow rather than a shared set of grid rows — sharing rows lets the
+ * tall calendar stretch the short pickers beside it and strand the form at the
+ * bottom of the section.
  */
 @media (min-width: 1024px) {
   .widget {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     align-items: start;
-    gap: 28px 32px;
+    gap: 32px;
   }
 
-  .widget > :nth-child(1),
-  .widget > :nth-child(2) {
-    grid-column: 1;
+  .colChoice,
+  .colSchedule {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 20px;
   }
 
-  .widget > :nth-child(3),
-  .widget > :nth-child(4) {
-    grid-column: 2;
+  .formSlot {
+    order: 0;
+    /* The summary card is the section's endpoint — give it room to breathe. */
+    margin-top: 4px;
   }
 }

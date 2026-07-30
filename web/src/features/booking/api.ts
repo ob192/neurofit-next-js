@@ -7,6 +7,7 @@ import type {
   MonthKey,
 } from './types';
 import type { ServiceId } from '@/content/services';
+import type { TrainerSelection } from '@/content/trainers';
 
 /**
  * Browser-side client for the mock booking API.
@@ -42,11 +43,12 @@ async function parseError(response: Response): Promise<never> {
 
 export async function fetchMonthAvailability(
   serviceId: ServiceId,
+  trainer: TrainerSelection,
   month: MonthKey,
   signal?: AbortSignal,
 ): Promise<MonthAvailability> {
   const response = await fetch(
-    `/api/availability?service=${serviceId}&month=${month}`,
+    `/api/availability?service=${serviceId}&trainer=${trainer}&month=${month}`,
     { signal },
   );
   if (!response.ok) return parseError(response);
@@ -55,12 +57,14 @@ export async function fetchMonthAvailability(
 
 export async function fetchDayAvailability(
   serviceId: ServiceId,
+  trainer: TrainerSelection,
   date: IsoDate,
   signal?: AbortSignal,
 ): Promise<DayAvailabilityDetail> {
-  const response = await fetch(`/api/availability?service=${serviceId}&date=${date}`, {
-    signal,
-  });
+  const response = await fetch(
+    `/api/availability?service=${serviceId}&trainer=${trainer}&date=${date}`,
+    { signal },
+  );
   if (!response.ok) return parseError(response);
   return (await response.json()) as DayAvailabilityDetail;
 }
