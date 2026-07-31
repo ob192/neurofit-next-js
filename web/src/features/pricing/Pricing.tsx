@@ -67,19 +67,35 @@ export function Pricing() {
               {group.title}
             </h3>
 
-            <p className={styles.listLabel}>{pricingCopy.singlesLabel}</p>
-            <ul className={styles.list}>
-              {group.singles.map((item) => (
-                <PriceRow key={item.name} item={item} />
-              ))}
-            </ul>
+            {group.singles.length > 0 ? (
+              <>
+                <p className={styles.listLabel}>{pricingCopy.singlesLabel}</p>
+                <ul className={styles.list}>
+                  {group.singles.map((item) => (
+                    <PriceRow key={item.name} item={item} />
+                  ))}
+                </ul>
+              </>
+            ) : null}
 
-            <p className={styles.listLabel}>{pricingCopy.packagesLabel}</p>
-            <ul className={styles.list}>
-              {group.packages.map((item) => (
-                <PriceRow key={item.name} item={item} />
-              ))}
-            </ul>
+            {group.packages.length > 0 ? (
+              <>
+                <p className={styles.listLabel}>{pricingCopy.packagesLabel}</p>
+                <ul className={styles.list}>
+                  {group.packages.map((item) => (
+                    <PriceRow key={item.name} item={item} />
+                  ))}
+                </ul>
+              </>
+            ) : null}
+
+            {group.addons && group.addons.length > 0 ? (
+              <ul className={styles.list}>
+                {group.addons.map((item) => (
+                  <PriceRow key={item.name} item={item} />
+                ))}
+              </ul>
+            ) : null}
           </article>
         ))}
       </div>
