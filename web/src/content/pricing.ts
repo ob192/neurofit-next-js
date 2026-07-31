@@ -11,6 +11,8 @@ import type { IconName } from '@/components/Icon/Icon';
  */
 
 export type PriceItem = {
+  /** Stable key for items that need to be referenced outside the price table, e.g. by the booking form. */
+  id?: string;
   name: string;
   /** UAH. Integers only — the studio prices in whole hryvnia. */
   price: number;
@@ -30,7 +32,23 @@ export type PriceGroup = {
   icon: IconName;
   singles: readonly PriceItem[];
   packages: readonly PriceItem[];
+  /**
+   * Flat list of one-off add-ons, no singles/packages split — the group title
+   * already carries the context. Optional; most groups don't have any.
+   */
+  addons?: readonly PriceItem[];
 };
+
+/**
+ * Not Altegio-backed: the studio has no separate booking service for these,
+ * so a request for one is written into the appointment comment instead (see
+ * `BookingWidget`'s `handleSubmit`). Exported so the booking form can offer
+ * the same two options the price card lists.
+ */
+export const addonServices: readonly PriceItem[] = [
+  { id: 'ab-tuning', name: 'Тюнінг преса', price: 250, note: '10 хв' },
+  { id: 'glute-tuning', name: 'Тюнінг сідниць', price: 250, note: '10 хв' },
+];
 
 export const priceGroups: readonly PriceGroup[] = [
   {
@@ -38,14 +56,21 @@ export const priceGroups: readonly PriceGroup[] = [
     title: 'EMS-тренування',
     icon: 'zap',
     singles: [
-      { name: 'Основне тренування', price: 600 },
-      { name: 'Пробне тренування', price: 500 },
-      { name: 'Лімфодренажний масаж', price: 400 },
+      { name: 'Основне тренування', price: 650 },
+      { name: 'Пробне тренування', price: 550 },
+      { name: 'Лімфодренажний масаж', price: 450 },
     ],
     packages: [
-      { name: '4 тренування', price: 2200, sessions: 4 },
-      { name: '8 тренувань', price: 3800, sessions: 8 },
-      { name: '12 тренувань', price: 5000, sessions: 12, savingPercent: 30, best: true },
+      { name: '4 тренування', price: 2400, sessions: 4, note: 'діє 30 днів' },
+      { name: '8 тренувань', price: 4400, sessions: 8, note: 'заморозка до 7 днів' },
+      {
+        name: '12 тренувань',
+        price: 6000,
+        sessions: 12,
+        note: 'заморозка до 10 днів',
+        savingPercent: 23,
+        best: true,
+      },
     ],
   },
   {
@@ -61,6 +86,14 @@ export const priceGroups: readonly PriceGroup[] = [
       { name: '8 тренувань', price: 3600, sessions: 8 },
       { name: '10 тренувань', price: 4200, sessions: 10, savingPercent: 16, best: true },
     ],
+  },
+  {
+    id: 'addons',
+    title: 'Додаткові послуги',
+    icon: 'hand',
+    singles: [],
+    packages: [],
+    addons: addonServices,
   },
 ];
 

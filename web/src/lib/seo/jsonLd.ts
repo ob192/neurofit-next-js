@@ -74,7 +74,7 @@ const SAME_AS = [site.google.place, site.social.instagram];
 
 /** Every price rendered by the Pricing section, cheapest first. */
 const allPrices = priceGroups
-  .flatMap((group) => [...group.singles, ...group.packages])
+  .flatMap((group) => [...group.singles, ...group.packages, ...(group.addons ?? [])])
   .map((item) => item.price)
   .sort((a, b) => a - b);
 
@@ -157,8 +157,8 @@ function offerCatalogNode(): JsonLdNode {
       ...priceGroups.map((group) => ({
         '@type': 'OfferCatalog',
         name: group.title,
-        itemListElement: [...group.singles, ...group.packages].map((item) =>
-          offerNode(group.title, item),
+        itemListElement: [...group.singles, ...group.packages, ...(group.addons ?? [])].map(
+          (item) => offerNode(group.title, item),
         ),
       })),
       ...services
