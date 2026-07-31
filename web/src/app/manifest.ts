@@ -23,8 +23,8 @@ export default function manifest(): MetadataRoute.Manifest {
     scope: '/',
     display: 'standalone',
     // Matches the `themeColor` in layout.tsx and --color-primary-deep.
-    theme_color: '#4a1a73',
-    background_color: '#4a1a73',
+    theme_color: '#5a2189',
+    background_color: '#5a2189',
     icons: [
       {
         src: '/web-app-manifest-192x192.png',

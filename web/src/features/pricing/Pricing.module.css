@@ -99,7 +99,7 @@
   color: var(--color-white);
 }
 
-/* Not --color-on-dark-muted: that lands at 3.4:1 on this purple. */
+/* Not --color-on-dark-muted: that lands at 3.7:1 on this purple. */
 .rowBest .rowMeta {
   color: var(--color-on-dark-body);
 }
@@ -156,7 +156,8 @@
 
 @media (min-width: 768px) {
   /* EMS and stretching side by side — the whole point of the section is
-     comparing them, which a 2000px-tall stack defeats. */
+     comparing them, which a 2000px-tall stack defeats. Add-ons wrap onto
+     their own row underneath as the odd one out. */
   .groups {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));

@@ -9,14 +9,18 @@
 
 :root {
   /* ---- Brand purples -------------------------------------------------- */
-  --color-primary: #6d28a8; /* selected states, primary surfaces */
-  --color-primary-deep: #4a1a73; /* WhyEMS section, booking summary, footer top */
-  --color-primary-bright: #7b2fb0; /* hero gradient end */
-  --color-primary-darkest: #2a0f45; /* footer gradient end */
+  --color-primary: #7a2fbb; /* selected states, primary surfaces */
+  --color-primary-deep: #5a2189; /* WhyEMS section, booking summary, footer top */
+  --color-primary-bright: #8a3bc2; /* hero gradient end */
+  --color-primary-darkest: #38155c; /* footer gradient end */
   --color-accent: #8b45c4; /* eyebrows, "open hours" hint */
 
+  /* --color-accent is deliberately *not* lightened with the rest of the ramp:
+     it is only ever small text, and on --color-surface-lilac it already sits at
+     4.75:1. One more step up drops it under the 4.5:1 floor. */
+
   /* Single energetic accent, reserved for the hero's proof numerals. Amber is
-     4.0:1 against the *lightest* end of the hero gradient — below the 4.5:1
+     3.3:1 against the *lightest* end of the hero gradient — below the 4.5:1
      body-text floor, so it may only be used at large display sizes (>=24px
      bold), where 3:1 applies. Do not use it for body copy on purple. */
   --color-energy: #ffb020;
@@ -35,9 +39,11 @@
 
   /* ---- On-dark text --------------------------------------------------- */
   --color-on-dark: #f4eefb; /* primary text on purple */
-  --color-on-dark-muted: #b79bd6; /* secondary text on purple */
+  /* These track the purples above: the surfaces got lighter, so the text on
+     them had to as well to hold 4.5:1. */
+  --color-on-dark-muted: #c9b3e3; /* secondary text on purple */
   --color-on-dark-soft: #d8c6ee; /* footer tagline */
-  --color-on-dark-body: #e4d6f5; /* hero subheading */
+  --color-on-dark-body: #ece1f9; /* hero subheading */
 
   /* ---- Translucent overlays (on the hero/footer gradients) ------------ */
   --overlay-8: #ffffff14;
@@ -47,7 +53,7 @@
   --overlay-18: #ffffff2e;
   --overlay-20: #ffffff33;
   --overlay-12: #ffffff1f;
-  --overlay-primary-8: #6d28a814;
+  --overlay-primary-8: #7a2fbb14;
 
   /* ---- Gradients ------------------------------------------------------ */
   --gradient-hero: linear-gradient(
