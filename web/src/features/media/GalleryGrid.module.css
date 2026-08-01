@@ -1,0 +1,199 @@
+/* ---- Grid -------------------------------------------------------------- */
+
+.gallery {
+  display: grid;
+  width: 100%;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.tile {
+  position: relative;
+  height: 108px;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  background: var(--color-border);
+}
+
+/*
+ * The button fills the tile so the whole photo is the hit area — at three
+ * columns on a phone each tile is already close to the 44px floor, and an
+ * inset control would push it under.
+ */
+.tileButton {
+  position: absolute;
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  inset: 0;
+}
+
+.tileInner {
+  object-fit: cover;
+  object-position: center;
+  transition: transform var(--transition-base);
+}
+
+.tileButton:hover .tileInner,
+.tileButton:focus-visible .tileInner {
+  transform: scale(1.06);
+}
+
+/* ---- Lightbox ---------------------------------------------------------- */
+
+.lightbox {
+  max-width: 100vw;
+  max-height: 100dvh;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  overflow: hidden;
+}
+
+.lightbox::backdrop {
+  background: rgb(0 0 0 / 82%);
+}
+
+.frame {
+  position: relative;
+  display: flex;
+  width: 100%;
+  height: 100%;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 56px var(--gutter) 24px;
+}
+
+/*
+ * The stage claims the space the caption leaves over and the photo is centred
+ * inside it with `contain`. Sizing the *photo* instead — `width: auto` off its
+ * own intrinsic size — reads cleaner but collapses to a 0px box until the file
+ * loads, which is a visible jump every time the lightbox opens; a definite box
+ * has the same geometry before and after the load.
+ *
+ * The cost is that a portrait photo leaves bands to its left and right (or
+ * above and below on a phone). They look like backdrop, so they carry
+ * `data-dismiss` and close on click like the rest of it.
+ *
+ * `min-height: 0` is what lets the box shrink inside the flex column instead of
+ * pushing the caption off-screen.
+ */
+.stage {
+  position: relative;
+  width: 100%;
+  min-height: 0;
+  flex: 1 1 auto;
+}
+
+.stageInner {
+  object-fit: contain;
+  object-position: center;
+}
+
+.caption {
+  display: flex;
+  max-width: 60ch;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  color: var(--color-on-dark-body);
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 20px;
+  text-align: center;
+  text-wrap: balance;
+}
+
+.counter {
+  color: var(--color-on-dark-muted);
+  font-size: 13px;
+  font-weight: var(--font-weight-semibold);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- Controls ---------------------------------------------------------- */
+
+.nav,
+.close {
+  position: absolute;
+  display: flex;
+  width: var(--tap-target);
+  height: var(--tap-target);
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--overlay-18);
+  color: var(--color-white);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.nav:hover,
+.close:hover {
+  background: var(--overlay-20);
+}
+
+.close {
+  top: 12px;
+  right: var(--gutter);
+  font-size: 26px;
+  line-height: 1;
+}
+
+.nav {
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.navPrev {
+  left: 8px;
+}
+
+.navNext {
+  right: 8px;
+}
+
+/* ---- Tablet / desktop -------------------------------------------------- */
+
+@media (min-width: 768px) {
+  .gallery {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .tile {
+    height: 160px;
+  }
+
+  .frame {
+    padding: 64px 72px 28px;
+  }
+
+  .caption {
+    font-size: 15px;
+  }
+
+  .navPrev {
+    left: 20px;
+  }
+
+  .navNext {
+    right: 20px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .tile {
+    height: 180px;
+  }
+}

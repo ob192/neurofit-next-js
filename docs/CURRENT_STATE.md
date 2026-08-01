@@ -218,6 +218,8 @@ Initialised 2026-07-27; initial commit `284a5d6` on `main`, 78 files. No remote
 configured, nothing pushed.
 
 `index.html` and `images/` at the root are the untouched design export, kept for
-reference. Nothing in `web/` imports from them — the hero image was copied to
-`web/public/images/hero-ems-studio.png`. Safe to delete once the port is signed
-off; they are preserved in git history.
+reference. Nothing in `web/` imports from them. The export's hero image is gone
+too: `web/public/images/hero-ems-studio.webp` is now a real studio photo, and
+every service card and gallery tile is a studio original under
+`web/public/images/gallery/`. Safe to delete once the port is signed off; they
+are preserved in git history.

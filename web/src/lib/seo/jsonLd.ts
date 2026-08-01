@@ -34,8 +34,6 @@ const CURRENCY = 'UAH';
  * `logo` and `image` are different claims and used to point at the same file:
  * `image` is what the business looks like — the hero shot, which is rendered on
  * the page — and `logo` is the brand mark search engines put beside the name.
- * (`hero-ems-studio.png` is a JPEG despite the extension; that is the file the
- * studio supplied and Next sniffs the content, so the name is cosmetic.)
  *
  * Both are plain URL strings wherever they appear. schema.org accepts either a
  * URL or an ImageObject for these properties, and a URL sidesteps the two ways
@@ -46,7 +44,7 @@ const CURRENCY = 'UAH';
  * dimensions matter — declares it inline, once.
  */
 const LOGO_URL = `${siteUrl}/web-app-manifest-512x512.png`;
-const IMAGE_URL = `${siteUrl}/images/hero-ems-studio.png`;
+const IMAGE_URL = `${siteUrl}/images/hero-ems-studio.webp`;
 
 function primaryImage(): JsonLdNode {
   return {
@@ -54,8 +52,8 @@ function primaryImage(): JsonLdNode {
     '@id': PRIMARY_IMAGE_ID,
     url: IMAGE_URL,
     contentUrl: IMAGE_URL,
-    width: 1408,
-    height: 768,
+    width: 1200,
+    height: 1800,
     caption: site.description,
     inLanguage: site.lang,
   };

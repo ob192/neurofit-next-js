@@ -42,27 +42,7 @@
   font-weight: var(--font-weight-semibold);
 }
 
-/* ---- Gallery ---------------------------------------------------------- */
-
-.gallery {
-  display: grid;
-  width: 100%;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-}
-
-.tile {
-  position: relative;
-  height: 108px;
-  overflow: hidden;
-  border-radius: var(--radius-lg);
-  background: var(--color-border);
-}
-
-.tileInner {
-  object-fit: cover;
-  object-position: center;
-}
+/* The gallery grid and its lightbox live in `GalleryGrid.module.css`. */
 
 /* ---- Subscribe CTA ---------------------------------------------------- */
 
@@ -143,15 +123,6 @@
 /* ---- Tablet / desktop -------------------------------------------------- */
 
 @media (min-width: 768px) {
-  .gallery {
-    grid-template-columns: repeat(6, minmax(0, 1fr));
-    gap: 12px;
-  }
-
-  .tile {
-    height: 160px;
-  }
-
   .quotes {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -180,10 +151,6 @@
 }
 
 @media (min-width: 1024px) {
-  .tile {
-    height: 180px;
-  }
-
   .heading {
     font-size: 42px;
   }

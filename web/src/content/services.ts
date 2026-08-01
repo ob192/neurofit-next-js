@@ -37,8 +37,8 @@ export const services: readonly Service[] = [
     durationMinutes: 30,
     bookable: true,
     image: {
-      src: 'https://images.unsplash.com/photo-1705885054951-11e5454f4567?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w4NDM0ODN8MHwxfHJhbmRvbXx8fHx8fHx8fDE3ODQ2MjcyNDF8&ixlib=rb-4.1.0&q=80&w=1080',
-      alt: 'Тренування в EMS-костюмі під наглядом персонального тренера',
+      src: '/images/gallery/1-19.webp',
+      alt: 'Клієнтка студії в застебнутому EMS-костюмі з електродами',
     },
   },
   {
@@ -52,8 +52,8 @@ export const services: readonly Service[] = [
     durationMinutes: 30,
     bookable: true,
     image: {
-      src: 'https://images.unsplash.com/photo-1758520704946-74b96f67ded3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w4NDM0ODN8MHwxfHJhbmRvbXx8fHx8fHx8fDE3ODQ2MjcyNDJ8&ixlib=rb-4.1.0&q=80&w=1080',
-      alt: 'Заняття зі стретчингу — розтяжка під контролем тренера',
+      src: '/images/gallery/1-37.webp',
+      alt: 'Нахил убік на занятті зі стретчингу під контролем тренерки',
     },
   },
   {
@@ -68,8 +68,8 @@ export const services: readonly Service[] = [
     // Not yet offered for online booking — shown, but greyed out in the widget.
     bookable: false,
     image: {
-      src: 'https://images.unsplash.com/photo-1636581563815-9c40c35abe0b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w4NDM0ODN8MHwxfHJhbmRvbXx8fHx8fHx8fDE3ODQ2MjcyNDR8&ixlib=rb-4.1.0&q=80&w=1080',
-      alt: 'Боксерське тренування з персональним тренером',
+      src: '/images/gallery/img-0631.webp',
+      alt: 'Удар по боксерському мішку в EMS-костюмі та рукавичках',
     },
   },
 ];

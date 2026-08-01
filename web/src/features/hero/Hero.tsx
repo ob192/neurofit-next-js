@@ -4,7 +4,7 @@ import { Icon } from '@/components/Icon/Icon';
 import { hero } from '@/content/hero';
 import { site, telHref } from '@/content/site';
 import { services } from '@/content/services';
-import heroImage from '../../../public/images/hero-ems-studio.png';
+import heroImage from '../../../public/images/hero-ems-studio.webp';
 import { cta, trackSection } from '@/lib/analytics/gtm';
 import styles from './Hero.module.css';
 
@@ -82,7 +82,7 @@ export function Hero() {
       <div className={styles.image}>
         <Image
           src={heroImage}
-          alt="Персональне EMS-тренування у студії NeuroFit"
+          alt="Випад в EMS-костюмі під вивіскою студії NeuroFit"
           fill
           priority
           sizes="(min-width: 768px) 50vw, 100vw"

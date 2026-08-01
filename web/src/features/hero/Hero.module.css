@@ -258,7 +258,10 @@
 
 .imageInner {
   object-fit: cover;
-  object-position: center;
+  /* The source is a 2:3 portrait and every hero box is landscape, so a centred
+     crop lands on the subject's hips. Biasing up keeps her head and the studio
+     sign in frame at both the 300px phone box and the 520px desktop one. */
+  object-position: center 18%;
 }
 
 /* ---- Tablet / desktop -------------------------------------------------- */

@@ -71,7 +71,8 @@ Path alias is `@/*` → `src/*`.
 - TypeScript strict, including `noUncheckedIndexedAccess`. Indexing an array
   yields `T | undefined`; handle it rather than reaching for `!`.
 - Server components by default. Add `'use client'` only when you need state or
-  event handlers — currently only under `features/booking/`.
+  event handlers — currently `features/booking/` and the gallery lightbox
+  (`features/media/GalleryGrid.tsx`).
 - Prefer a native element over a JS component. The FAQ accordion is
   `<details>`/`<summary>` on purpose; don't "upgrade" it to a client component.
 - Comments explain *why*, not *what*. Match the density of the surrounding file.

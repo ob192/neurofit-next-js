@@ -1,10 +1,10 @@
-import Image from 'next/image';
 import { Section } from '@/components/Section/Section';
 import { Icon } from '@/components/Icon/Icon';
 import { site } from '@/content/site';
 import { galleryTiles } from '@/content/gallery';
 import { reviews } from '@/content/reviews';
 import { cta } from '@/lib/analytics/gtm';
+import { GalleryGrid } from './GalleryGrid';
 import styles from './Media.module.css';
 
 export function Media() {
@@ -29,19 +29,7 @@ export function Media() {
         <p className={styles.handle}>{site.social.instagramHandle}</p>
       </header>
 
-      <ul className={styles.gallery}>
-        {galleryTiles.map((tile) => (
-          <li key={tile.src} className={styles.tile}>
-            <Image
-              src={tile.src}
-              alt={tile.alt}
-              fill
-              sizes="(min-width: 768px) 180px, 33vw"
-              className={styles.tileInner}
-            />
-          </li>
-        ))}
-      </ul>
+      <GalleryGrid tiles={galleryTiles} />
 
       <a
         className={styles.subscribe}
