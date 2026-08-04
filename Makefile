@@ -11,9 +11,12 @@
 
 DOCKER_USER ?= sasha192bunin
 TAG         ?= latest
-PLATFORMS   ?= linux/amd64,linux/arm64
 
 BOT_IMAGE := $(DOCKER_USER)/neurofit-bot
+
+# `latest` alongside the real tag — but not twice when TAG is already `latest`,
+# which would tag and push the same reference two times.
+ALSO_LATEST := $(filter-out latest,$(TAG))
 
 # Absolute, so the docker targets work from any directory.
 ROOT := $(patsubst %/,%,$(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
@@ -56,8 +59,9 @@ build-site: ## Production build of the site
 # ---- Bot image -------------------------------------------------------------
 
 .PHONY: build
-build: ## Build the bot image for this machine
-	docker build -t $(BOT_IMAGE):$(TAG) -t $(BOT_IMAGE):latest $(ROOT)/bot
+build: ## Build the bot image
+	docker build -t $(BOT_IMAGE):$(TAG) \
+		$(if $(ALSO_LATEST),-t $(BOT_IMAGE):latest) $(ROOT)/bot
 
 .PHONY: login
 login: ## Log in to Docker Hub as $(DOCKER_USER)
@@ -66,18 +70,13 @@ login: ## Log in to Docker Hub as $(DOCKER_USER)
 .PHONY: push
 push: ## Push the image built by `make build`
 	docker push $(BOT_IMAGE):$(TAG)
-	docker push $(BOT_IMAGE):latest
+	$(if $(ALSO_LATEST),docker push $(BOT_IMAGE):latest)
 
-# Multi-arch images cannot be loaded into the local daemon, so buildx builds and
-# publishes in one step. This is the target to use for a real deploy: the studio
-# may well end up on an arm64 VPS.
-.PHONY: release
-release: ## Build multi-arch ($(PLATFORMS)) and push
-	docker buildx build --platform $(PLATFORMS) --push \
-		-t $(BOT_IMAGE):$(TAG) -t $(BOT_IMAGE):latest $(ROOT)/bot
-
+# Single-architecture, whatever this machine is. Multi-arch would need the
+# buildx container driver, and the studio deploys to one known host — the
+# complexity buys nothing. Build on a machine matching the target's arch.
 .PHONY: deploy
-deploy: check release ## Verify, then build and publish multi-arch
+deploy: check build push ## Verify, build, publish
 
 # ---- Running ---------------------------------------------------------------
 

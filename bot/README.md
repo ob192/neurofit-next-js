@@ -61,11 +61,12 @@ to fix.
 make build          # local image
 make run            # runs it with bot/.env and a named volume for state
 make login          # docker login as sasha192bunin
-make deploy         # check, then buildx multi-arch → Docker Hub
+make deploy         # check, build, push → Docker Hub
 make up / down / logs
 ```
 
-Published as `sasha192bunin/neurofit-bot`. The token and group id are read at
+Published as `sasha192bunin/neurofit-bot`, built for whatever architecture the
+build machine is — so build on one matching the host you deploy to. The token and group id are read at
 run time from `--env-file`, never baked into the image. Leave `BOT_STATE_FILE`
 unset in `.env` when running the image — it already points at `/data/state.json`,
 which is where the volume is mounted.
