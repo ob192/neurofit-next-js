@@ -72,9 +72,25 @@ to fix.
 make build          # local image
 make run            # runs it with bot/.env and a named volume for state
 make login          # docker login as sasha192bunin
+make tags           # what a deploy would publish
 make deploy         # check, build, push → Docker Hub
 make up / down / logs
 ```
+
+Every deploy publishes **two** tags: an immutable one and `latest`. The
+immutable tag defaults to the short commit sha (`-dirty` appended if the tree
+has uncommitted changes), so a container in production can always be traced
+back to the code that built it — `latest` alone cannot, because it moves. The
+same commit is recorded in the image's OCI labels:
+
+```bash
+docker inspect --format '{{index .Config.Labels "org.opencontainers.image.revision"}}' \
+  sasha192bunin/neurofit-bot:latest
+```
+
+Override for a release name: `make deploy TAG=v1.2`. Pin the immutable tag in
+production rather than `latest`, so a redeploy is a decision instead of a
+side effect of whatever was pushed last.
 
 Published as `sasha192bunin/neurofit-bot`, built for whatever architecture the
 build machine is — so build on one matching the host you deploy to. The token and group id are read at

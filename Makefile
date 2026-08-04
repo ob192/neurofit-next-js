@@ -3,23 +3,34 @@
 # Only the bot is containerised. The website is a static Next.js build deployed
 # by its host, so it has no image here; `make dev` / `make check` cover it.
 #
-# Override anything on the command line:  make deploy TAG=2026-08-04
+# Override anything on the command line:  make deploy TAG=v1.2
 #
 # Nothing here bakes bot/.env into an image. The token and group id are passed
 # at *run* time — an image on Docker Hub is world-readable if the repo is
 # public, and `docker history` exposes build args.
 
-DOCKER_USER ?= sasha192bunin
-TAG         ?= latest
-
-BOT_IMAGE := $(DOCKER_USER)/neurofit-bot
-
-# `latest` alongside the real tag — but not twice when TAG is already `latest`,
-# which would tag and push the same reference two times.
-ALSO_LATEST := $(filter-out latest,$(TAG))
-
 # Absolute, so the docker targets work from any directory.
 ROOT := $(patsubst %/,%,$(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
+
+DOCKER_USER ?= sasha192bunin
+BOT_IMAGE   := $(DOCKER_USER)/neurofit-bot
+
+GIT_SHA   := $(shell git -C $(ROOT) rev-parse --short HEAD 2>/dev/null || echo unknown)
+GIT_DIRTY := $(if $(shell git -C $(ROOT) status --porcelain 2>/dev/null),-dirty)
+
+# The default tag is the commit, so a container in production can always be
+# traced back to the code that built it. `latest` alone cannot: it moves, and
+# once it has moved there is no way to ask what a running image actually
+# contains. Override for a release name: make deploy TAG=v1.2
+#
+# A build from an unclean tree is tagged `-dirty` rather than refused — the
+# quick fix at 9pm is legitimate, it just must not masquerade as a commit.
+TAG ?= $(GIT_SHA)$(GIT_DIRTY)
+
+# `latest` moves to whatever was deployed last, alongside the immutable tag —
+# but not twice when TAG is already `latest`, which would push one reference
+# under one name two times.
+ALSO_LATEST := $(filter-out latest,$(TAG))
 
 .DEFAULT_GOAL := help
 
@@ -58,10 +69,19 @@ build-site: ## Production build of the site
 
 # ---- Bot image -------------------------------------------------------------
 
+.PHONY: tags
+tags: ## Show the tags a deploy would publish
+	@echo "$(BOT_IMAGE):$(TAG)$(if $(ALSO_LATEST), + $(BOT_IMAGE):latest)"
+	@$(if $(GIT_DIRTY),echo "  working tree is dirty — tagged $(GIT_DIRTY)",true)
+
 .PHONY: build
 build: ## Build the bot image
 	docker build -t $(BOT_IMAGE):$(TAG) \
-		$(if $(ALSO_LATEST),-t $(BOT_IMAGE):latest) $(ROOT)/bot
+		$(if $(ALSO_LATEST),-t $(BOT_IMAGE):latest) \
+		--label org.opencontainers.image.revision=$(GIT_SHA) \
+		--label org.opencontainers.image.version=$(TAG) \
+		--label org.opencontainers.image.source=https://github.com/ob192/neurofit-next-js \
+		$(ROOT)/bot
 
 .PHONY: login
 login: ## Log in to Docker Hub as $(DOCKER_USER)
@@ -71,12 +91,13 @@ login: ## Log in to Docker Hub as $(DOCKER_USER)
 push: ## Push the image built by `make build`
 	docker push $(BOT_IMAGE):$(TAG)
 	$(if $(ALSO_LATEST),docker push $(BOT_IMAGE):latest)
+	@echo "published $(BOT_IMAGE):$(TAG)$(if $(ALSO_LATEST), and :latest)"
 
 # Single-architecture, whatever this machine is. Multi-arch would need the
 # buildx container driver, and the studio deploys to one known host — the
 # complexity buys nothing. Build on a machine matching the target's arch.
 .PHONY: deploy
-deploy: check build push ## Verify, build, publish
+deploy: tags check build push ## Verify, build, publish
 
 # ---- Running ---------------------------------------------------------------
 
