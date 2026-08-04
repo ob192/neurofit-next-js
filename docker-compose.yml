@@ -1,0 +1,25 @@
+# Runs the booking bot on a host. `make up` / `make down` / `make logs`.
+#
+# The image is pulled from Docker Hub by default; `docker compose build` builds
+# it locally from the same Dockerfile the Makefile uses.
+#
+# The website is not here — it is a static Next.js build deployed by its host.
+
+services:
+  bot:
+    image: ${DOCKER_USER:-sasha192bunin}/neurofit-bot:${TAG:-latest}
+    build:
+      context: ./bot
+    container_name: neurofit-bot
+    # The token and group id are read at run time, never baked into the image.
+    env_file:
+      - ./bot/.env
+    volumes:
+      # The client→topic mapping. Losing it re-opens a second topic per client.
+      - bot-state:/data
+    # Long polling exposes no port to probe, so the restart policy is the
+    # liveness mechanism: if the process dies, bring it back.
+    restart: unless-stopped
+
+volumes:
+  bot-state:

@@ -11,20 +11,13 @@ import { JsonLd } from '@/lib/seo/JsonLd';
 import { buildJsonLd } from '@/lib/seo/jsonLd';
 import styles from './page.module.css';
 
-type PageProps = {
-  searchParams: Promise<{ service?: string }>;
-};
-
-/**
- * The landing page is rendered per request rather than statically: the booking
- * section server-renders live availability from the mock store, so a cached
- * HTML shell would show slots that are no longer free.
+/*
+ * The page is fully static again. It used to be `force-dynamic` because the
+ * booking section server-rendered live availability on every request; booking
+ * now hands off to a Telegram bot, so there is nothing left on the page that
+ * goes stale between builds.
  */
-export const dynamic = 'force-dynamic';
-
-export default async function HomePage({ searchParams }: PageProps) {
-  const { service } = await searchParams;
-
+export default function HomePage() {
   return (
     <>
       <JsonLd data={buildJsonLd()} />
@@ -33,7 +26,7 @@ export default async function HomePage({ searchParams }: PageProps) {
         <Services />
         <WhyEms />
         <Pricing />
-        <BookingSection preselectedService={service} />
+        <BookingSection />
         <Media />
         <Faq />
         <Location />

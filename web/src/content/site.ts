@@ -24,6 +24,20 @@ const googleCid = '3364450468895833228';
 /** The Maps pin, from the same URL (`@51.4983543,31.3047183,17z`). */
 const geo = { latitude: 51.4983543, longitude: 31.3047183 } as const;
 
+/**
+ * The studio's booking bot — the single destination of every "Записатися" CTA
+ * since the online calendar was retired (see `docs/TELEGRAM_BOOKING.md`).
+ *
+ * Env-configurable because the bot is deployed separately from the site and its
+ * username is the one thing the two halves must agree on. `NEXT_PUBLIC_` since
+ * the links are rendered into the HTML; a bot username is not a secret. The
+ * fallback is the studio's own handle, so an unset variable degrades to the
+ * right link rather than to a dead one.
+ */
+const telegramBotUsername = (
+  process.env.NEXT_PUBLIC_TELEGRAM_BOT ?? 'neurofit_booking_bot'
+).replace(/^@/, '');
+
 export const site = {
   name: 'NeuroFit',
   legalName: 'NeuroFit',
@@ -83,6 +97,12 @@ export const site = {
     geo,
   },
 
+  telegram: {
+    botUsername: telegramBotUsername,
+    botHandle: `@${telegramBotUsername}`,
+    url: `https://t.me/${telegramBotUsername}`,
+  },
+
   social: {
     instagramHandle: '@neuro_fit_ems_studio',
     instagram: 'https://www.instagram.com/neuro_fit_ems_studio/',
@@ -100,3 +120,16 @@ export const site = {
 } as const;
 
 export const telHref = `tel:${site.phone.e164}`;
+
+/**
+ * Deep link into the booking bot.
+ *
+ * `payload` is handed to the bot as `/start <payload>` so a CTA on a specific
+ * format can open the chat with that format already chosen. Telegram only
+ * accepts `A-Za-z0-9_-` there and silently drops the whole parameter otherwise,
+ * so anything else is stripped rather than sent and lost.
+ */
+export function telegramBookingHref(payload?: string): string {
+  const start = payload?.replace(/[^A-Za-z0-9_-]/g, '') ?? '';
+  return start ? `${site.telegram.url}?start=${start}` : site.telegram.url;
+}

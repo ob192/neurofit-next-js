@@ -1,70 +1,27 @@
 import { Section } from '@/components/Section/Section';
 import { Icon } from '@/components/Icon/Icon';
-import {
-  defaultBookableServiceId,
-  isBookableServiceId,
-  type ServiceId,
-} from '@/content/services';
-import type { TrainerSelection } from '@/content/trainers';
-import { getDayAvailability, getMonthAvailability } from '@/lib/booking';
-import { monthKeyOf, studioToday } from '@/lib/date';
-import { site } from '@/content/site';
+import { ButtonLink } from '@/components/Button/Button';
+import { services } from '@/content/services';
+import { site, telHref, telegramBookingHref } from '@/content/site';
 import { booking } from '@/content/booking';
-import type { DayAvailabilityDetail, MonthAvailability } from './types';
-import { BookingWidget } from './components/BookingWidget';
+import { cta } from '@/lib/analytics/gtm';
 import styles from './BookingSection.module.css';
 
-type BookingSectionProps = {
-  /** From `?service=` — set by the "Записатися" CTA on each service card. */
-  preselectedService?: string;
-};
-
 /**
- * Server half of the booking flow.
+ * The booking section.
  *
- * Availability is read straight from the mock store here — not via fetch to
- * our own route handler. Calling your own HTTP endpoint during SSR costs a
- * round-trip and can deadlock on a single-worker server; the route handlers and
- * this component both sit on top of the same `lib/mock/availability` functions
- * instead.
+ * Booking itself happens in the studio's Telegram bot, so this section is a
+ * hand-off rather than a form: it explains what the visitor is about to walk
+ * into and then gets out of the way. Every format is listed — the bot takes
+ * requests for all three, including EMS Boxing, which the retired online
+ * calendar could not sell.
  *
- * The upshot is that the rendered HTML already contains a real calendar with
- * real busy days, so the section is meaningful before any JavaScript runs and
- * to crawlers that never execute it.
+ * Deliberately a server component with no state: it is three anchors and a list.
+ * The old calendar's client bundle, its API round-trips and the `force-dynamic`
+ * they forced on the whole page are all gone with it. The Altegio-backed
+ * version is kept, dormant, in `AltegioBookingSection.tsx`.
  */
-export async function BookingSection({ preselectedService }: BookingSectionProps) {
-  // A `?service=` pointing at a format that isn't bookable (EMS Boxing today)
-  // falls back rather than opening the widget on a greyed-out chip.
-  const serviceId: ServiceId =
-    preselectedService && isBookableServiceId(preselectedService)
-      ? preselectedService
-      : defaultBookableServiceId;
-
-  // No trainer preference by default — the calendar shows every trainer's free
-  // slots until the visitor narrows it down in the widget.
-  const trainer: TrainerSelection = 'any';
-  const today = studioToday();
-  const month = monthKeyOf(today);
-
-  // Server-render live availability. If the backend is briefly unreachable, fall
-  // back to an empty calendar rather than failing the whole page — the client
-  // widget will retry on the first interaction.
-  let monthAvailability: MonthAvailability = { month, serviceId, trainer, days: [] };
-  let selectedDate: string | null = null;
-  let dayAvailability: DayAvailabilityDetail | null = null;
-
-  try {
-    monthAvailability = await getMonthAvailability(serviceId, month, trainer);
-    // Preselect the soonest bookable day so the calendar isn't an empty prompt.
-    selectedDate =
-      monthAvailability.days.find((day) => day.status === 'available')?.date ?? null;
-    dayAvailability = selectedDate
-      ? await getDayAvailability(serviceId, selectedDate, trainer)
-      : null;
-  } catch {
-    // Leave the fallbacks in place; the widget recovers client-side.
-  }
-
+export function BookingSection() {
   return (
     <Section
       id="booking"
@@ -76,31 +33,78 @@ export async function BookingSection({ preselectedService }: BookingSectionProps
     >
       <header className={styles.head}>
         <p className={styles.kicker}>
-          <Icon name="calendar-check" size={13} />
-          <span>ОНЛАЙН-ЗАПИС</span>
+          <Icon name="send" size={13} />
+          <span>{booking.kicker}</span>
         </p>
         <h2 id="booking-heading" className={styles.title}>
-          Забронюйте тренування
+          {booking.title}
         </h2>
-        <p className={styles.desc}>
-          Оберіть послугу, зручну дату та час. Працюємо щодня з {site.hours.opens} до{' '}
-          {site.hours.closes}.
-        </p>
+        <p className={styles.desc}>{booking.desc(site.hours.opens, site.hours.closes)}</p>
         <p className={styles.note}>
           <Icon name="shield-check" size={14} />
           <span>{booking.note}</span>
         </p>
       </header>
 
-      <BookingWidget
-        serviceId={serviceId}
-        trainer={trainer}
-        month={month}
-        monthAvailability={monthAvailability}
-        selectedDate={selectedDate}
-        dayAvailability={dayAvailability}
-        minMonth={month}
-      />
+      <div className={styles.card}>
+        {/* Numbered by the list itself, not by hand — the markers are the `ol`'s
+            own counter, so the steps stay correctly numbered if copy is added. */}
+        <ol className={styles.steps}>
+          {booking.steps.map((step) => (
+            <li key={step} className={styles.step}>
+              {step}
+            </li>
+          ))}
+        </ol>
+
+        <ButtonLink
+          href={telegramBookingHref()}
+          variant="ink"
+          className={styles.cta}
+          {...cta('booking-telegram')}
+        >
+          <Icon name="send" size={17} />
+          <span>{booking.cta}</span>
+        </ButtonLink>
+
+        <div className={styles.formats}>
+          <p className={styles.formatsLabel}>{booking.formatsLabel}</p>
+          <ul className={styles.formatList}>
+            {services.map((service) => (
+              <li key={service.id}>
+                {/*
+                  The service id travels as the bot's `/start` payload, so the
+                  chat opens on the format the visitor pressed. If Telegram
+                  drops the payload the bot just asks — the link still works.
+                */}
+                <a
+                  className={styles.format}
+                  href={telegramBookingHref(service.id)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={booking.formatAriaLabel(service.name)}
+                  {...cta(`booking-telegram-${service.id}`)}
+                >
+                  <Icon name={service.icon} size={14} />
+                  <span>{service.shortName}</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        {/* Not everyone in the studio's audience uses Telegram, and a chat-only
+            funnel silently loses those people. The phone stays one tap away. */}
+        <p className={styles.fallback}>
+          <span>{booking.fallbackLead}</span>{' '}
+          <a className={styles.fallbackLink} href={telHref} {...cta('booking-call')}>
+            <Icon name="phone" size={13} />
+            <span>
+              {booking.fallbackCta} {site.phone.display}
+            </span>
+          </a>
+        </p>
+      </div>
     </Section>
   );
 }

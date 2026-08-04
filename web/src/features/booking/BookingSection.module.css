@@ -1,10 +1,10 @@
 /*
- * Narrower than the page column on purpose. The booking flow is a form, and a
- * 1120px-wide date grid with 1120px-wide inputs is harder to use than a
- * compact one, not easier.
+ * The section is a hand-off to Telegram, not a form, so it wants a narrower
+ * measure than the page column — a full 1120px of three short sentences reads
+ * as an empty band.
  */
 .section {
-  --content-max: 900px;
+  --content-max: 720px;
 }
 
 .head {
@@ -73,6 +73,146 @@
   color: var(--color-primary);
 }
 
+/* ---- The hand-off card ------------------------------------------------- */
+
+.card {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: 18px;
+  padding: 20px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-2xl);
+  background: var(--color-surface);
+}
+
+.steps {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  /* The markers are drawn below, so the browser's own list bullets would be a
+     second, misaligned numbering. */
+  list-style: none;
+  counter-reset: booking-step;
+}
+
+.step {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 10px;
+  color: var(--color-heading);
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 21px;
+  counter-increment: booking-step;
+}
+
+.step::before {
+  content: counter(booking-step);
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--radius-pill);
+  background: var(--overlay-primary-8);
+  color: var(--color-primary);
+  font-size: 12px;
+  font-weight: var(--font-weight-bold);
+  /* Optically centres the numeral against the first line of the step text. */
+  margin-top: 0;
+}
+
+.cta {
+  gap: 9px;
+}
+
+.cta svg {
+  flex-shrink: 0;
+}
+
+/* ---- Per-format shortcuts ---------------------------------------------- */
+
+.formats {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.formatsLabel {
+  color: var(--color-muted);
+  font-family: var(--font-body);
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.formatList {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 8px;
+  list-style: none;
+}
+
+.format {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 7px;
+  /* Below the 44px tap target on its own, so the padding does the work. */
+  min-height: var(--tap-target);
+  padding: 0 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-lilac);
+  color: var(--color-heading);
+  font-family: var(--font-body);
+  font-size: 13.5px;
+  font-weight: var(--font-weight-semibold);
+  text-decoration: none;
+  transition:
+    background var(--transition-fast),
+    border-color var(--transition-fast);
+}
+
+.format svg {
+  flex-shrink: 0;
+  color: var(--color-primary);
+}
+
+.format:hover {
+  border-color: var(--color-primary);
+  background: var(--overlay-primary-8);
+}
+
+/* ---- Phone fallback ----------------------------------------------------- */
+
+.fallback {
+  color: var(--color-muted);
+  font-family: var(--font-body);
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.fallbackLink {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 5px;
+  color: var(--color-primary);
+  font-weight: var(--font-weight-semibold);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.fallbackLink:hover {
+  text-decoration: underline;
+}
+
 @media (min-width: 768px) {
   .title {
     font-size: 38px;
@@ -87,5 +227,22 @@
     max-width: 60ch;
     font-size: 15px;
     line-height: 24px;
+  }
+
+  .card {
+    gap: 20px;
+    padding: 26px;
+  }
+
+  .step {
+    font-size: 15px;
+  }
+
+  /* From tablet up the button no longer needs the whole width — a 720px-wide
+     pill reads as a banner rather than as something to press. */
+  .cta {
+    width: fit-content;
+    min-width: 280px;
+    align-self: flex-start;
   }
 }

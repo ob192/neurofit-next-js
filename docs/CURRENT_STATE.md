@@ -1,6 +1,6 @@
 # Current state
 
-Last updated: 2026-07-27 · commit `284a5d6`
+Last updated: 2026-08-04 · branch `feat/telegram-booking`
 
 Status snapshot. For *how it works* see [ARCHITECTURE.md](ARCHITECTURE.md); for
 *why it deviates from the design* see [CONCESSIONS.md](CONCESSIONS.md).
@@ -8,17 +8,21 @@ Status snapshot. For *how it works* see [ARCHITECTURE.md](ARCHITECTURE.md); for
 ## Summary
 
 The static `index.html` export has been migrated to a Next.js 16 app in `web/`.
-All seven sections are ported, the booking flow books against the studio's real
-Altegio calendar (with an in-memory mock fallback when unconfigured), and the
-page is server-rendered with JSON-LD.
+All seven sections are ported and the page is prerendered as static HTML with
+JSON-LD.
 
-`npm run lint` and `npm run typecheck` pass clean.
+**Booking is a hand-off to Telegram.** Every "Записатися" CTA opens
+`@neurofit_booking_bot` (`bot/`, Python + aiogram); a manager confirms the time
+in chat. The site itself books nothing and collects no contact details. See
+[TELEGRAM_BOOKING.md](TELEGRAM_BOOKING.md).
 
-> **Live bookings are real.** With Altegio credentials set, a submitted booking
-> creates a genuine, non-cancellable appointment in the studio's calendar. The
-> public API has no cancel endpoint — cancellations go through the Altegio admin
-> UI. Some calendar edge-case bugs (below) remain from the mock era; verify they
-> don't apply to the Altegio-driven calendar before relying on them.
+`npm run lint` and `npm run typecheck` pass clean; `make check` runs both plus
+the bot's compile check.
+
+> **The Altegio integration is dormant, not deleted.** Nothing imports it, the
+> API routes are unregistered, and it all still type-checks. The map and the
+> restore procedure are in `web/src/archive/README.md`. The calendar edge-case
+> bugs listed below belong to that dormant code — they are not live.
 
 ## Done
 
@@ -162,10 +166,11 @@ Full rationale for each in [CONCESSIONS.md](CONCESSIONS.md).
 
 | Area | Status |
 | --- | --- |
-| Booking persistence | **Live via Altegio** when configured; in-memory `Map` (lost on restart) as the no-credentials fallback. |
-| Booking notifications | Handled by Altegio on the live backend; none on the mock fallback. |
-| Booked slots in the calendar | **Real** from Altegio `book_dates`/`book_times` when live; seeded PRNG on the mock. |
-| CRM / Altegio | **Integrated** (public booking API, `src/lib/altegio/` + `src/lib/booking/`) on the owner's request. Env-gated: `ALTEGIO_PARTNER_TOKEN` + `ALTEGIO_LOCATION_ID` in `web/.env.local`. Bookings are one-way — the public API cannot cancel them. |
+| Booking | **Real, but human.** A request reaches a manager in the studio's Telegram group; they confirm the time by hand. Nothing is written to a calendar. |
+| Booking record | The group topic *is* the record. `bot/data/state.json` holds only the client→topic mapping. |
+| Booking notifications | Telegram itself — the 🆕 request is the only message in a topic that pings. |
+| Free slots on the site | **Not shown at all.** The calendar left with the widget. |
+| CRM / Altegio | **Dormant.** Kept, compiling, unimported — `web/src/archive/README.md`. |
 | Instagram gallery | Six static Unsplash photos, not the real feed |
 | Service card images | Unsplash placeholders from the export |
 | Reviews | Placeholder testimonials (rendered, not marked up) |
@@ -188,13 +193,15 @@ Ordered by what blocks what.
    lists "проспект Перемоги, 119А, Чернігів, Чернігівська область, 14000",
    which matches `site.address` field for field. Only the casing differs
    ("Проспект"/"проспект", "119а"/"119А"); the site keeps the design's form.
-3. **Set Altegio env on the host.** Add `ALTEGIO_PARTNER_TOKEN` and
-   `ALTEGIO_LOCATION_ID` to the deploy platform's environment (they live in
-   `web/.env.local` for local work, which is gitignored). Without them the site
-   silently falls back to the in-memory mock — bookings would reach no one.
-4. **Confirm booking notifications** are configured studio-side in Altegio
-   (SMS/email to staff and client). The app itself sends nothing extra.
-5. Fix the three known issues above.
+3. **Run the bot somewhere.** `make deploy` publishes
+   `sasha192bunin/neurofit-bot`; the host needs `TELEGRAM_BOT_TOKEN`,
+   `TELEGRAM_GROUP_CHAT_ID` and a volume for the state file. Exactly one
+   instance — two pollers on one token fight, and Telegram 409s the loser.
+   Until it runs, every CTA on the site opens a bot that answers nothing.
+4. **Agree who watches the group.** A missed message is a lost client; there is
+   no queue, no reminder and no second channel. Muting the group defeats it.
+5. Fix the three known issues above — or don't: they are in dormant code and
+   affect nothing until the calendar is restored.
 6. **Set `NEXT_PUBLIC_SITE_URL` on the host.** It is in `web/.env.local` for
    local work (`https://neurofit-chernihiv.restreto-labs.com`), but that file
    is gitignored — the deploy platform needs its own copy. Without it every
