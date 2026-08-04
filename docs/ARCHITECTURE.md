@@ -4,6 +4,13 @@ How the NeuroFit app is put together and why. For *what deviates from the ideal
 and why we accepted it*, see [CONCESSIONS.md](CONCESSIONS.md). For *what is
 finished and what is broken*, see [CURRENT_STATE.md](CURRENT_STATE.md).
 
+> **Booking left the page.** Everything below about the booking widget, the
+> mock/Altegio backends and `force-dynamic` describes code that is now dormant
+> — kept, compiling, imported by nothing. Booking is a hand-off to a Telegram
+> bot: [TELEGRAM_BOOKING.md](TELEGRAM_BOOKING.md) for the current design,
+> `web/src/archive/README.md` for what sits where. The sections below are the
+> record of how the calendar worked, and the brief for restoring it.
+
 ## Where this came from
 
 The original was a single 2,536-line `index.html` exported from a design tool
@@ -36,8 +43,9 @@ web/src/
 ├── content/              All Ukrainian copy as typed data
 ├── features/             One directory per landing section
 │   ├── hero/ services/ why-ems/ media/ faq/ footer/
-│   └── booking/          The only interactive feature
-└── lib/                  date.ts, mock/ (the store), seo/
+│   └── booking/          The Telegram hand-off + the dormant calendar
+├── archive/              Dormant: the Altegio API routes. Never imported.
+└── lib/                  date.ts, seo/, and the dormant altegio/ booking/ mock/
 ```
 
 ### The import rule
@@ -66,9 +74,12 @@ cannot drift apart, because there is only one of them.
 
 ## Rendering strategy
 
-The page is `dynamic = 'force-dynamic'` — rendered per request. The booking
-section server-renders live availability, so a cached HTML shell would advertise
-slots that are already gone.
+The page is **static** — prerendered at build time, no ISR needed, because
+nothing on it changes between builds.
+
+It was `dynamic = 'force-dynamic'` for as long as the booking section
+server-rendered live availability, since a cached shell would have advertised
+slots that were already gone. That constraint left with the calendar.
 
 ### The booking split
 
@@ -95,10 +106,12 @@ availability rather than two that can disagree.
 
 ### Client/server boundary
 
-Five components carry `'use client'`, all under `features/booking/`:
-`BookingWidget`, `ServicePicker`, `Calendar`, `TimePicker`, `BookingForm`.
+One component carries `'use client'`: the gallery lightbox
+(`features/media/GalleryGrid.tsx`). The five that used to — `BookingWidget`,
+`ServicePicker`, `Calendar`, `TimePicker`, `BookingForm` — are dormant and no
+longer reach the bundle.
 
-Everything else — six of the seven sections — is server-rendered and ships no
+Everything else — all seven sections — is server-rendered and ships no
 JavaScript. The FAQ accordion is native `<details>`/`<summary>` rather than a
 client component: no JS, correct keyboard and screen-reader semantics for free,
 and every answer stays in the server-rendered DOM. That last point is
@@ -243,7 +256,8 @@ cross-reference rather than repeating the business three times:
 - `HealthAndBeautyBusiness` + `ExerciseGym` — address, phone, `geo`, `hasMap`
   pointing at the Google Business Profile, seven-day
   `openingHoursSpecification`, `sameAs` (the Google listing plus socials), an
-  `OfferCatalog` of the three services, and a `ReserveAction` at `#booking`
+  `OfferCatalog` of the three services, and a `ReserveAction` pointing at
+  the Telegram bot (where booking actually happens)
 - `FAQPage` with all six questions
 - Two `ImageObject`s — the logo and the hero — referenced by `@id` from
   wherever they're needed rather than repeated as bare URLs with dimensions

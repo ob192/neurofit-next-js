@@ -7,9 +7,14 @@ Guidance for AI coding agents working in this repository.
 Landing page for NeuroFit, a personal-training studio in Chernihiv, Ukraine.
 Migrated from a single static `index.html` design export to a Next.js app.
 
-**All work happens in `web/`.** The root `index.html` and `images/` are the
-original design export, kept for reference — do not edit them, and do not import
-from them.
+Two deployables:
+
+- **`web/`** — the site. Most work happens here.
+- **`bot/`** — the Telegram booking bot (Python, aiogram). Booking is a hand-off
+  to it; the site itself books nothing. See `docs/TELEGRAM_BOOKING.md`.
+
+The root `index.html` and `images/` are the original design export, kept for
+reference — do not edit them, and do not import from them.
 
 ```bash
 cd web
@@ -19,20 +24,28 @@ npm run lint
 npm run typecheck
 ```
 
-Before claiming a change works, run `npm run lint` **and** `npm run typecheck`.
-The build alone will not catch lint errors.
+```bash
+cd bot
+pip install -r requirements.txt
+python -m app
+```
+
+Before claiming a web change works, run `npm run lint` **and** `npm run
+typecheck`. The build alone will not catch lint errors.
 
 ## Non-negotiables
 
 1. **No CRM, no database, no unrequested external services.** Do not add
-   Supabase, Prisma or any provider SDK unless explicitly asked. The booking
-   backend **is now wired to Altegio (alteg.io)** — added on the owner's
-   explicit request — but through a plain `fetch` client (`src/lib/altegio/`),
-   **not** an SDK. It is gated by env (`ALTEGIO_PARTNER_TOKEN` +
-   `ALTEGIO_LOCATION_ID` in `web/.env.local`); when those are unset the flow
-   falls back to the in-memory mock (`src/lib/mock/`), so dev and CI still run
-   credential-free. Do not remove the Altegio integration as "unrequested" —
-   see `docs/CONCESSIONS.md` and the "Booking backend" section below.
+   Supabase, Prisma or any provider SDK unless explicitly asked. The two
+   integrations that exist were both requested by the owner: the Telegram bot
+   (`bot/`, aiogram) and, before it, Altegio.
+
+   **The Altegio integration is dormant, not deleted.** Nothing in the running
+   site imports it. Do not "clean it up" — the owner asked for it to be kept so
+   the calendar can come back. It still compiles and is covered by `lint` and
+   `typecheck` on every run, which is how it is stopped from rotting. The map of
+   what lives where, and the restore procedure, is in
+   `web/src/archive/README.md`.
 2. **No CSS framework.** No Tailwind, no styled-components, no CSS-in-JS.
    One `*.module.css` per component, colocated.
 3. **No new colour/spacing literals.** Add a token to `src/app/tokens.css` and
@@ -53,11 +66,20 @@ The build alone will not catch lint errors.
 
 ```
 web/src/
-├── app/          Routes, layout, globals.css, tokens.css, api/
+├── app/          Routes, layout, globals.css, tokens.css
+├── archive/      Dormant code — the Altegio API routes. Never imported.
 ├── components/   Cross-feature primitives (Icon, Section, Button, Tag, Brand…)
 ├── content/      All copy + site config as typed data
 ├── features/     One directory per landing section
-└── lib/          date.ts, mock/ (booking store), seo/
+└── lib/          date.ts, seo/, and the dormant altegio/, booking/, mock/
+
+bot/app/
+├── config.py     Environment, validated at startup
+├── content.py    Every string the bot sends
+├── keyboards.py  The persistent button + the three format buttons
+├── relay.py      The two-way bridge; all Telegram calls for a client
+├── storage.py    chat <-> topic mapping, one JSON file
+└── handlers/     setup.py (/id), client.py (private), studio.py (group)
 ```
 
 **Import rule:** `features/*` may import from `components/`, `content/` and
@@ -71,41 +93,68 @@ Path alias is `@/*` → `src/*`.
 - TypeScript strict, including `noUncheckedIndexedAccess`. Indexing an array
   yields `T | undefined`; handle it rather than reaching for `!`.
 - Server components by default. Add `'use client'` only when you need state or
-  event handlers — currently `features/booking/` and the gallery lightbox
-  (`features/media/GalleryGrid.tsx`).
+  event handlers — the gallery lightbox (`features/media/GalleryGrid.tsx`) is
+  now the only live one, plus the dormant booking widget.
 - Prefer a native element over a JS component. The FAQ accordion is
   `<details>`/`<summary>` on purpose; don't "upgrade" it to a client component.
 - Comments explain *why*, not *what*. Match the density of the surrounding file.
 
-## Booking backend
+## Booking
 
-The booking flow has two interchangeable backends behind one provider
-(`src/lib/booking/`). Route handlers and the server-rendered `BookingSection`
-call the provider — never a backend directly.
+**Booking is a hand-off to Telegram.** Every "Записатися" CTA on the site is a
+`t.me` link to `@neurofit_booking_bot`; a manager confirms the time in chat. The
+site collects no contact details and books nothing. Full write-up:
+`docs/TELEGRAM_BOOKING.md`.
+
+- The link is built by `telegramBookingHref()` in `src/content/site.ts` — never
+  hardcode a `t.me` URL. The handle comes from `NEXT_PUBLIC_TELEGRAM_BOT`.
+- Service CTAs pass the service id as the bot's `/start` payload, so `ems`,
+  `boxing` and `stretching` are **shared vocabulary** between
+  `web/src/content/services.ts` and `bot/app/content.py`. Renaming one without
+  the other silently downgrades those links to a generic prompt.
+- `services.ts` still carries `bookable: false` on EMS Boxing. Nothing live
+  reads it; the bot offers all three formats. It is left alone so the archived
+  widget behaves as it did if restored.
+- All bot copy lives in `bot/app/content.py`, for the same reason the site's
+  copy lives in `src/content/` — the studio must be able to reword it without
+  reading logic.
+
+### The dormant Altegio stack
+
+Kept on the owner's instruction, imported by nothing. `web/src/archive/README.md`
+is the map and the restore procedure. What still holds if it is ever revived:
 
 - **`src/lib/altegio/`** — a typed, server-only `fetch` wrapper over the Altegio
-  *public* booking API (`Bearer {partner_token}`). It can read the catalogue and
-  availability and create bookings; it **cannot** cancel them or list existing
-  appointments (that needs a business-user token we don't hold). Treat a created
-  booking as irreversible via this app.
+  *public* booking API. It can read the catalogue and availability and create
+  bookings; it **cannot** cancel them or list existing appointments (that needs
+  a business-user token we don't hold).
 - **`src/lib/booking/`** — maps the site's model onto Altegio and picks the
-  backend. Live when env is set, mock otherwise.
+  backend (live when env is set, `src/lib/mock/` otherwise).
+- Mapping rules agreed with the owner — all three formats book the one Altegio
+  service «Основне тренування» (`12935553`) with the format written into the
+  appointment comment; bookable trainers are **Вікторія** and **Аліна** only
+  (**Лідія**, `2879290`, is deliberately excluded); slots are 30 min from
+  `book_dates`/`book_times`.
 
-Mapping rules (in `src/lib/booking/mapping.ts` + `src/content/trainers.ts`),
-agreed with the owner — don't "correct" them to match the raw Altegio catalogue:
-
-- All three marketing formats (EMS, Стретчинг, **EMS Boxing**) book the **one**
-  Altegio service «Основне тренування» (`12935553`). The chosen format is written
-  into the appointment **comment** (`"EMS Boxing — <client note>"`).
-- Bookable trainers are **Вікторія** and **Аліна** only. Altegio staff **Лідія**
-  (`2879290`) is deliberately excluded — she is not a bookable trainer.
-- Slots are **30 min** (Altegio's grid); the calendar/times come straight from
-  `book_dates`/`book_times`, so it reflects the studio's real schedule.
-
-`GET /api/bookings` returns 501 on the live backend by design (no public listing;
-would leak PII). The mock still serves it for local demos.
+**Do not run both flows at once without deciding what owns the calendar.** They
+share no state, so a slot a manager fills from a Telegram request is invisible
+to Altegio.
 
 ## Things that will bite you
+
+- **The bot's format ids are the site's service ids.** `ems`, `boxing`,
+  `stretching` appear in `web/src/content/services.ts` *and* in
+  `bot/app/content.py`, joined by the `?start=` deep link. Nothing checks that
+  they still match; a rename shows up as CTAs that stopped preselecting.
+- **The bot must be a group administrator.** Telegram's privacy mode means a
+  non-admin bot never sees managers' replies, so the studio → client direction
+  silently dies. `verify_group()` refuses to start without it.
+- **Leave `BOT_STATE_FILE` unset in Docker.** The image points it at the
+  `/data` volume; setting it in `.env` overrides that and writes the mapping
+  somewhere unwritable.
+
+The rest of this list concerns the **dormant** calendar. It is still true, and
+still worth reading before restoring it, but none of it is live today.
 
 - **Dates are `YYYY-MM-DD` strings, not `Date` objects.** Use `lib/date.ts`.
   Converting to `Date` and back introduces off-by-one-day bugs across
@@ -152,6 +201,9 @@ studio instead.
 
 ## More context
 
+- `docs/TELEGRAM_BOOKING.md` — why booking left the page, and how to undo it
+- `bot/README.md` — the bot: flow, setup, deployment, what managers need to know
+- `web/src/archive/README.md` — what is dormant and how to switch it back on
 - `docs/ARCHITECTURE.md` — how it's built and why
 - `docs/CONCESSIONS.md` — every deliberate deviation and its cost to undo
 - `docs/CURRENT_STATE.md` — what's done, what's mocked, known bugs, launch blockers
@@ -159,4 +211,5 @@ studio instead.
 There are three known bugs in the calendar's edge behaviour (seed window shorter
 than the booking horizon, beyond-horizon days mislabelled `past`, unbounded
 forward month navigation). They're described in `docs/CURRENT_STATE.md` — check
-there before "fixing" something that's already logged.
+there before "fixing" something that's already logged. All three are in the
+dormant calendar, so none of them affects anything the site currently renders.

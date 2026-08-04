@@ -2,7 +2,7 @@ import Image from 'next/image';
 import { Brand } from '@/components/Brand/Brand';
 import { Icon } from '@/components/Icon/Icon';
 import { hero } from '@/content/hero';
-import { site, telHref } from '@/content/site';
+import { site, telHref, telegramBookingHref } from '@/content/site';
 import { services } from '@/content/services';
 import heroImage from '../../../public/images/hero-ems-studio.webp';
 import { cta, trackSection } from '@/lib/analytics/gtm';
@@ -64,7 +64,17 @@ export function Hero() {
           </span>
         </p>
 
-        <a className={styles.cta} href="#booking" {...cta('hero-book')}>
+        {/* Straight into the Telegram bot rather than scrolling to the booking
+            section: the section is now an explainer around the same link, and
+            making the primary CTA a two-step scroll-then-tap costs conversions
+            for no gain. */}
+        <a
+          className={styles.cta}
+          href={telegramBookingHref()}
+          target="_blank"
+          rel="noopener noreferrer"
+          {...cta('hero-book')}
+        >
           <span>{hero.ctaLabel}</span>
           <Icon name="arrow-right" size={18} />
         </a>

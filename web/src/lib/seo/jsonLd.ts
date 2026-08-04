@@ -240,12 +240,18 @@ function businessNode(): JsonLdNode {
     ],
     sameAs: SAME_AS,
     hasOfferCatalog: offerCatalogNode(),
+    /*
+     * The reserve action points at the Telegram bot, which is where booking
+     * actually happens — `#booking` on the page is now an explainer wrapped
+     * around this same link, and pointing the action there would describe a
+     * form that no longer exists.
+     */
     potentialAction: {
       '@type': 'ReserveAction',
       name: 'Забронювати тренування',
       target: {
         '@type': 'EntryPoint',
-        urlTemplate: `${siteUrl}/#booking`,
+        urlTemplate: site.telegram.url,
         inLanguage: site.lang,
         actionPlatform: [
           'http://schema.org/DesktopWebPlatform',

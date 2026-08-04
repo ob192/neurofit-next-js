@@ -8,6 +8,8 @@ import {
   perSessionRate,
   type PriceItem,
 } from '@/content/pricing';
+import { telegramBookingHref } from '@/content/site';
+import { cta } from '@/lib/analytics/gtm';
 import styles from './Pricing.module.css';
 
 function PriceRow({ item }: { item: PriceItem }) {
@@ -100,7 +102,12 @@ export function Pricing() {
         ))}
       </div>
 
-      <ButtonLink href="#booking" variant="ink" className={styles.cta}>
+      <ButtonLink
+        href={telegramBookingHref()}
+        variant="ink"
+        className={styles.cta}
+        {...cta('pricing-book')}
+      >
         <span>{pricingCopy.ctaLabel}</span>
         <Icon name="arrow-right" size={18} />
       </ButtonLink>

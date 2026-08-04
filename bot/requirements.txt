@@ -1,0 +1,10 @@
+# Runtime dependencies for the NeuroFit booking bot.
+#
+# aiogram is pinned to the 3.x line: 3.7 introduced DefaultBotProperties and
+# 3.x is what the handler signatures below are written against. A 4.x release
+# would be a rewrite, not an upgrade, so it is excluded on purpose.
+aiogram>=3.15,<4
+
+# Only used to read bot/.env in development. Production hosts (systemd, Docker,
+# a PaaS) inject the same variables themselves and never touch this.
+python-dotenv>=1.0,<2

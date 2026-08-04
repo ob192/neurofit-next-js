@@ -2,6 +2,7 @@ import Image from 'next/image';
 import { Icon } from '@/components/Icon/Icon';
 import { Tag, TagList } from '@/components/Tag/Tag';
 import type { Service } from '@/content/services';
+import { telegramBookingHref } from '@/content/site';
 import { cta } from '@/lib/analytics/gtm';
 import styles from './Services.module.css';
 
@@ -29,14 +30,15 @@ export function ServiceCard({ service }: { service: Service }) {
         </TagList>
 
         {/*
-          A real query param rather than a fragment-with-query: the page reads
-          `?service=` on the server and renders the booking form with this
-          service already picked, so the CTA works with JavaScript disabled and
-          the `#booking` hash still scrolls to the right place.
+          The service id rides along as the bot's `/start` payload, so the chat
+          opens with this format already chosen — the same job the old
+          `?service=` param did for the on-page booking form.
         */}
         <a
           className={styles.cardCta}
-          href={`/?service=${service.id}#booking`}
+          href={telegramBookingHref(service.id)}
+          target="_blank"
+          rel="noopener noreferrer"
           {...cta(`service-book-${service.id}`)}
         >
           <span>Записатися</span>

@@ -1,4 +1,4 @@
-import type { ButtonHTMLAttributes, ReactNode } from 'react';
+import type { AnchorHTMLAttributes, ButtonHTMLAttributes, ReactNode } from 'react';
 import styles from './Button.module.css';
 
 type Variant = 'white' | 'ink';
@@ -14,7 +14,8 @@ type CommonProps = {
 type ButtonProps = CommonProps &
   Omit<ButtonHTMLAttributes<HTMLButtonElement>, keyof CommonProps>;
 
-type LinkProps = CommonProps & { href: string };
+type LinkProps = CommonProps &
+  Omit<AnchorHTMLAttributes<HTMLAnchorElement>, keyof CommonProps> & { href: string };
 
 function classes(variant: Variant, fullWidth: boolean, className?: string) {
   return [styles.button, styles[variant], fullWidth ? styles.fullWidth : null, className]
@@ -44,6 +45,7 @@ export function ButtonLink({
   className,
   href,
   children,
+  ...rest
 }: LinkProps) {
   const isExternal = href.startsWith('http');
 
@@ -52,6 +54,7 @@ export function ButtonLink({
       href={href}
       className={classes(variant, fullWidth, className)}
       {...(isExternal ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+      {...rest}
     >
       {children}
     </a>

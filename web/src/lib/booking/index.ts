@@ -1,3 +1,12 @@
+/**
+ * **Dormant.** The booking provider that fronts Altegio and the in-memory mock.
+ *
+ * Nothing in the live app imports this any more: the studio moved booking to
+ * the Telegram bot in `bot/`, and the route handlers that used to call these
+ * functions now sit unregistered in `src/archive/api/`. The module is kept —
+ * compiling and type-checked — so the calendar can be switched back on. See
+ * `src/archive/README.md` and `docs/TELEGRAM_BOOKING.md`.
+ */
 import { isAltegioConfigured } from '@/lib/altegio/config';
 import * as mockAvailability from '@/lib/mock/availability';
 import { createBooking as mockCreateBooking } from '@/lib/mock/store';

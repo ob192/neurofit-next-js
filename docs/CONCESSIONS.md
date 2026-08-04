@@ -8,7 +8,8 @@ Everything here is **deliberate**. Unintentional defects live in
 
 | # | Concession | Driver | Cost to undo |
 | --- | --- | --- | --- |
-| 1 | No CRM or database; booking is an in-memory mock | Brief | High |
+| 0 | Booking is a hand-off to Telegram; nothing is booked on the site | Owner | Low |
+| 1 | ~~No CRM or database~~ — moot; the site books nothing | Brief | — |
 | 2 | Fabricated "booked" slots | No real data | Low |
 | 3 | Five FAQ answers written during migration | Design was incomplete | Low |
 | 4 | No `Review` / `aggregateRating` markup | Search-spam risk | Low |
@@ -18,12 +19,12 @@ Everything here is **deliberate**. Unintentional defects live in
 | 8 | Placeholder imagery | No studio assets | Low |
 | 9 | ~~Guessed social URLs~~ — removed | Not supplied | — |
 | 10 | Service CTA does a full page navigation | SSR correctness | Low |
-| 11 | Whole page is `force-dynamic` | Booking needs live data | Medium |
+| 11 | ~~Whole page is `force-dynamic`~~ — resolved | Booking left the page | — |
 | 12 | Filled icon paths, not real Lucide strokes | Export format | Medium |
 | 13 | No tests | Time | Medium |
 | 14 | No i18n framework | Brief | Medium |
 | 15 | Dimming instead of skeletons | Scope | Low |
-| 16 | Mock API is unauthenticated and unthrottled | Mock | Medium |
+| 16 | ~~Mock API is unauthenticated~~ — routes unregistered | Mock | — |
 | 17 | ~~Hero PNG doubles as the OG image~~ — resolved | No social card | — |
 | 18 | Original export kept in the repo | Reference | Trivial |
 | 19 | Map is a keyless Google iframe | No API key | Low |
@@ -31,6 +32,25 @@ Everything here is **deliberate**. Unintentional defects live in
 | 21 | Analytics ship without a consent banner | Not built | **Blocker** |
 
 ---
+
+## 0. Booking is a hand-off to Telegram
+
+**What.** The site books nothing. Every "Записатися" CTA is a `t.me` link to
+`@neurofit_booking_bot`; a manager confirms the time in chat. The calendar, the
+time grid and the contact form are gone from the page.
+
+**Why.** The studio asked for it — see `docs/TELEGRAM_BOOKING.md`. The
+underlying reason is that a manager was already confirming every Altegio
+booking by phone, so the calendar was a second source of truth nobody trusted.
+
+**Cost.** A visitor cannot see free slots, and a request that a manager misses
+is simply missed — there is no record outside the group chat. Against that: the
+booking section ships no JavaScript, the page is static again, and the site
+collects no personal data at all.
+
+**Undo.** Nothing was deleted. `web/src/archive/README.md` is the map and the
+procedure. Note the two flows share no state, so running both at once
+double-books the studio.
 
 ## 1. No CRM or database
 
@@ -185,18 +205,15 @@ an element with that literal id.
 
 **Trade-off.** A full round-trip instead of an instant in-page update.
 
-## 11. The whole page is `force-dynamic`
+## 11. The whole page was `force-dynamic` — *resolved*
 
-**What.** No static generation, no ISR. Every request re-renders everything.
+**What it was.** No static generation, no ISR. Every request re-rendered
+everything, because the booking section server-rendered live availability and a
+cached shell would advertise slots that were gone.
 
-**Why.** The booking section server-renders live availability; a cached shell
-would advertise slots that are gone.
-
-**Trade-off.** The six static sections pay for the one dynamic section. Fine at
-this traffic level, wasteful at scale.
-
-**Undo.** Make the booking section a streaming `<Suspense>` boundary and let the
-rest go static.
+**How it ended.** Booking moved to Telegram (§0). With no live data left on the
+page, `export const dynamic = 'force-dynamic'` went with it. The page is
+prerendered again — `next build` reports `/` as static.
 
 ## 12. Filled icon paths rather than real Lucide icons
 
@@ -253,8 +270,11 @@ whole schedule.
 **Why.** It's a mock with no real data behind it. Contact details *are* stripped
 from `GET` responses, and the endpoint is disallowed in `robots.txt`.
 
-**Undo.** Rate limiting and spam protection are mandatory before this endpoint
-is real. A real `GET /api/bookings` must not serve the schedule anonymously.
+**Status.** Moot for now: the route handlers moved to `src/archive/api/` when
+booking went to Telegram, so nothing is served. The warning stands for whoever
+restores them — rate limiting and spam protection are mandatory before that
+endpoint is real, and a real `GET /api/bookings` must not serve the schedule
+anonymously.
 
 ## 17. The hero PNG doubled as the Open Graph image — *resolved*
 
