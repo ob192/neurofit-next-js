@@ -39,8 +39,118 @@ def find_format(format_id: str) -> Format | None:
     return FORMATS_BY_ID.get(format_id.strip())
 
 
-#: The one persistent keyboard button the client always has.
+#: The booking button — the one that was here before the info buttons below.
 BOOKING_BUTTON = "Записатися!"
+
+
+@dataclass(frozen=True, slots=True)
+class InfoAnswer:
+    """A question the studio is tired of answering by hand."""
+
+    id: str
+    button: str
+    #: Sent as HTML. Safe because these are constants with nothing interpolated
+    #: into them — see `Relay.say`, which parses nothing by default.
+    answer: str
+    #: Mirrors `drafted` in `web/src/content/faq.ts`: the wording was assembled
+    #: from the site rather than dictated by the studio, and needs sign-off.
+    #: Everything factual in a drafted answer is traceable to something already
+    #: published on the site; nothing here was invented outright.
+    drafted: bool = False
+
+
+"""
+The price list is duplicated from `web/src/content/pricing.ts`.
+
+That is a real cost and it is taken deliberately: a client asking «Ціни» in a
+chat wants the numbers in the chat, not a link, and the two halves of this
+project do not share a language or a build. **Change one and you must change
+the other.** The per-session figures below all divide exactly; if a package
+stops dividing evenly, say so rather than rounding silently.
+
+Boxing has no prices here because the studio never supplied any — see the note
+at the top of `pricing.ts`. Do not interpolate them from the EMS rates.
+"""
+PRICES = """<b>💰 Ціни</b>
+
+<b>EMS-тренування</b>
+Разові заняття:
+• Основне тренування — 650 грн
+• Пробне тренування — 550 грн
+• Лімфодренажний масаж — 450 грн
+
+Абонементи:
+• 4 тренування — 2400 грн (600 грн / заняття, діє 30 днів)
+• 8 тренувань — 4400 грн (550 грн / заняття, заморозка до 7 днів)
+• 12 тренувань — 6000 грн (500 грн / заняття, заморозка до 10 днів) — найвигідніше, економія 23%
+
+<b>Стретчинг</b>
+Разові заняття:
+• Індивідуальне тренування — 500 грн
+• Міні-група — 400 грн (до 5 осіб, ціна за особу)
+
+Абонементи:
+• 4 тренування — 1900 грн (475 грн / заняття)
+• 8 тренувань — 3600 грн (450 грн / заняття)
+• 10 тренувань — 4200 грн (420 грн / заняття) — економія 16%
+
+<b>Додаткові послуги</b>
+• Тюнінг преса — 250 грн (10 хв)
+• Тюнінг сідниць — 250 грн (10 хв)
+
+Вартість EMS Боксу уточніть, будь ласка, у менеджера."""
+
+LOCATION = """<b>📍 Де ми знаходимось</b>
+
+Проспект Перемоги, 119а, Чернігів
+Щоденно 7:00 – 22:00
+Телефон: 063 377 08 88
+
+Google Maps: https://www.google.com/maps?cid=3364450468895833228
+Як знайти вхід: https://www.instagram.com/p/DOGOCjzClqw/"""
+
+DURATION = """<b>⏱ Скільки триває EMS-тренування</b>
+
+Саме тренування — <b>30 хвилин</b>. Цього достатньо: за навантаженням воно порівнянне з 2 годинами у звичайному залі.
+
+Разом із підготовкою та вдяганням костюма закладіть, будь ласка, близько години."""
+
+INCLUDED = """<b>✅ Що входить у вартість</b>
+
+• Персональне заняття з тренером 1:1
+• EMS-костюм і форма для тренування
+• Вода у студії
+
+Із собою потрібне лише змінне взуття."""
+
+#: The info buttons, in the order they are drawn on the keyboard.
+INFO_ANSWERS: tuple[InfoAnswer, ...] = (
+    InfoAnswer(id="prices", button="Ціни", answer=PRICES),
+    InfoAnswer(id="location", button="Де ми знаходимось?", answer=LOCATION),
+    # The 30 minutes is solid — it is the session length on the site and the
+    # studio's own slot length. The "about an hour in total" line is drafted.
+    InfoAnswer(
+        id="duration",
+        button="Скільки триває EMS-тренування?",
+        answer=DURATION,
+        drafted=True,
+    ),
+    # Assembled from the site's «Потрібне лише змінне взуття — форму видаємо»
+    # and its (drafted) FAQ answer about what the studio provides.
+    InfoAnswer(
+        id="included",
+        button="Що входить у вартість?",
+        answer=INCLUDED,
+        drafted=True,
+    ),
+)
+
+INFO_BY_BUTTON: dict[str, InfoAnswer] = {a.button: a for a in INFO_ANSWERS}
+INFO_BUTTONS: frozenset[str] = frozenset(INFO_BY_BUTTON)
+
+#: Answers still awaiting the studio's sign-off. The counterpart of
+#: `faqNeedsReview` in `web/src/content/faq.ts`.
+INFO_NEEDS_REVIEW: tuple[InfoAnswer, ...] = tuple(a for a in INFO_ANSWERS if a.drafted)
 
 
 class messages:
@@ -98,6 +208,16 @@ class studio:
 
     STARTED = "ℹ️ Клієнт відкрив бота"
     TAPPED_BOOKING_BUTTON = "ℹ️ Клієнт натиснув «Записатися!»"
+
+    @staticmethod
+    def asked(question: str) -> str:
+        """Stands in for a canned answer in the topic.
+
+        The answers are fixed and managers know them; mirroring the whole price
+        list into a thread would bury the client's own words. What a manager
+        needs from this line is the signal — *this* is what they wanted to know.
+        """
+        return f"ℹ️ Клієнт запитав: {question}"
 
     @staticmethod
     def topic_name(name: str, username: str | None) -> str:

@@ -20,8 +20,19 @@ client writes anything      →  copied into their topic
 manager writes in the topic →  copied to the client
 ```
 
-The client always has one keyboard button, **«Записатися!»**, which re-opens the
-format prompt. `/start ems`, `/start boxing`, `/start stretching` skip the
+The keyboard under every message is the menu:
+
+```
+[ Записатися! ]
+[ Ціни ] [ Де ми знаходимось? ]
+[ Скільки триває EMS-тренування? ]
+[ Що входить у вартість? ]
+```
+
+**«Записатися!»** re-opens the format prompt. The four questions are answered by
+the bot from canned text in `content.py` and are **not** forwarded to a manager
+— the topic gets a one-line «Клієнт запитав: …» marker instead, so the studio
+still sees what the client wanted without the price list burying the thread. `/start ems`, `/start boxing`, `/start stretching` skip the
 prompt — those are the deep links the website's per-service CTAs use, and the id
 matches `web/src/content/services.ts`.
 
@@ -132,13 +143,24 @@ Losing it is recoverable but not free — the topics stay in the group, and the
 next message from a known client opens a **second** topic for them. Back it up
 with the rest of the host's data.
 
+## Prices are duplicated
+
+`content.py` carries the price list, and so does `web/src/content/pricing.ts`.
+There is no shared source — the two halves of the project share neither a
+language nor a build, and a client asking «Ціни» in a chat wants the numbers in
+the chat rather than a link. **Change one and you must change the other.**
+
+Two answers are marked `drafted=True` (`INFO_NEEDS_REVIEW`), mirroring
+`faqNeedsReview` on the site: their wording was assembled from what the site
+already publishes rather than dictated by the studio, and needs sign-off.
+
 ## Deliberately absent
 
 - **No calendar, no slots, no confirmation.** A manager agrees the time in
   chat. The bot never claims a booking exists.
-- **No answers about price, contraindications or availability.** Anything the
-  client writes goes to a human. A bot improvising on medical suitability for
-  EMS is a liability, not a feature.
+- **No improvised answers.** The four buttons reply with fixed text the studio
+  controls; everything a client *types* goes to a human. The bot never composes
+  a reply about contraindications, availability or a price it wasn't given.
 - **No database.** See `storage.py` for why a file is the right size here.
 - **No Altegio.** The integration still exists in the website repo, dormant —
   `web/src/archive/README.md` has the restore procedure.

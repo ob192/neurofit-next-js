@@ -149,6 +149,10 @@ to Altegio.
 - **The bot must be a group administrator.** Telegram's privacy mode means a
   non-admin bot never sees managers' replies, so the studio → client direction
   silently dies. `verify_group()` refuses to start without it.
+- **Prices exist twice.** `web/src/content/pricing.ts` and the `PRICES` block in
+  `bot/app/content.py`. Nothing keeps them in sync, and a stale price quoted in
+  chat is worse than one on a page. Update both, and check the per-session
+  figures still divide evenly.
 - **Leave `BOT_STATE_FILE` unset in Docker.** The image points it at the
   `/data` volume; setting it in `.env` overrides that and writes the mapping
   somewhere unwritable.

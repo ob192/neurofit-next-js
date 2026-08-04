@@ -119,12 +119,25 @@ class Relay:
         client: Client,
         text: str,
         reply_markup: ReplyKeyboardMarkup | InlineKeyboardMarkup | None = None,
+        *,
+        html: bool = False,
+        mirror_as: str | None = None,
     ) -> None:
-        """Sends to the client *and* mirrors it into their topic."""
+        """Sends to the client *and* mirrors it into their topic.
+
+        ``html`` is opt-in per call, and only ever set for the canned answers in
+        `content.py` — constants with nothing interpolated into them. Anything
+        carrying a client's own words stays unparsed, so a name containing `<`
+        can never become markup or a send failure.
+
+        ``mirror_as`` replaces what goes into the topic. The canned answers use
+        it to log a one-line marker instead of repeating the whole price list.
+        """
         try:
             await self._bot.send_message(
                 chat_id=client.chat_id,
                 text=text,
+                parse_mode=ParseMode.HTML if html else None,
                 reply_markup=reply_markup if reply_markup else booking_keyboard(),
             )
         except TelegramAPIError as error:
@@ -133,7 +146,9 @@ class Relay:
             )
             return
 
-        await self.log_to_studio(client, studio.bot_said(escape(text)))
+        await self.log_to_studio(
+            client, mirror_as if mirror_as is not None else studio.bot_said(escape(text))
+        )
 
     async def copy_to_client(self, client: Client, message: Message) -> None:
         """Hands a manager's message to the client.
