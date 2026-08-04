@@ -182,13 +182,13 @@ changes what is being claimed. The studio has to choose the wording; the FAQ
 answer should be corrected regardless, since it is drafted, wrong, and shipped
 as `FAQPage` structured data.
 
-### Лімфодренажний масаж is priced *and* included — **live**
+### ~~Лімфодренажний масаж is priced *and* included~~ — resolved
 
-`content/pricing.ts` lists "Лімфодренажний масаж — 450 грн" as a single service,
-while the bot's «Що входить у вартість» says the 10-minute massage is included
-in the session. Both came from the studio. Presumably the 450 грн buys a longer
-standalone massage, but nothing says so, and a client reading both bot answers
-sees a plain contradiction. Needs one clarifying qualifier from the studio.
+It is a standalone 450 грн service that comes free with an EMS session. Both
+places that mention it now say «бонусом» — the price card in `pricing.ts`, via
+the item's `note`, and the bot's price list and what's-included answer — so a
+client tapping «Ціни» and «Що входить у вартість» in a row is not left
+reconciling them.
 
 ## Mocked / not real
 

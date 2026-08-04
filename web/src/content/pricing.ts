@@ -58,7 +58,13 @@ export const priceGroups: readonly PriceGroup[] = [
     singles: [
       { name: 'Основне тренування', price: 650 },
       { name: 'Пробне тренування', price: 550 },
-      { name: 'Лімфодренажний масаж', price: 450 },
+      {
+        name: 'Лімфодренажний масаж',
+        price: 450,
+        // Standalone service; free with an EMS session, which is worth stating
+        // on the card rather than leaving to be discovered in the studio.
+        note: 'з EMS-тренуванням — бонусом',
+      },
     ],
     packages: [
       { name: '4 тренування', price: 2400, sessions: 4, note: 'діє 30 днів' },

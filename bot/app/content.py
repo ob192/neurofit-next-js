@@ -77,7 +77,7 @@ PRICES = """<b>💰 Ціни</b>
 Разові заняття:
 • Основне тренування — 650 грн
 • Пробне тренування — 550 грн
-• Лімфодренажний масаж — 450 грн
+• Лімфодренажний масаж — 450 грн (з EMS-тренуванням — бонусом)
 
 Абонементи:
 • 4 тренування — 2400 грн (600 грн / заняття, діє 30 днів)
@@ -111,7 +111,7 @@ Google Maps: https://www.google.com/maps?cid=3364450468895833228
 
 DURATION = """<b>⏱ Скільки триває EMS-тренування</b>
 
-Саме тренування — <b>20 хвилин</b>, після нього лімфодренажний масаж — <b>10 хвилин</b>.
+Саме тренування — <b>20 хвилин</b>, після нього лімфодренажний масаж — <b>10 хвилин</b> бонусом.
 
 Разом заняття триває 30 хвилин."""
 
@@ -119,7 +119,7 @@ INCLUDED = """<b>✅ Що входить у вартість</b>
 
 • Персональне заняття з тренером 1:1
 • EMS-костюм і форма для тренування
-• Лімфодренажний масаж (10 хв)
+• Лімфодренажний масаж 10 хв — бонусом
 
 Із собою потрібне лише змінне взуття."""
 
@@ -130,6 +130,11 @@ INFO_ANSWERS: tuple[InfoAnswer, ...] = (
     # The 20 + 10 split came from the studio directly. Note it contradicts the
     # website, which presents the whole 30 minutes as EMS — see the mismatch
     # recorded in docs/CURRENT_STATE.md.
+    #
+    # The massage is a standalone 450 UAH service that comes free with an EMS
+    # session. It therefore appears in both the price list and the what's-
+    # included answer, and says "бонусом" in both — a client who taps the two
+    # buttons in a row must not be left reconciling them.
     InfoAnswer(id="duration", button="Скільки триває EMS-тренування?", answer=DURATION),
     InfoAnswer(id="included", button="Що входить у вартість?", answer=INCLUDED),
 )
