@@ -111,15 +111,15 @@ Google Maps: https://www.google.com/maps?cid=3364450468895833228
 
 DURATION = """<b>⏱ Скільки триває EMS-тренування</b>
 
-Саме тренування — <b>30 хвилин</b>. Цього достатньо: за навантаженням воно порівнянне з 2 годинами у звичайному залі.
+Саме тренування — <b>20 хвилин</b>, після нього лімфодренажний масаж — <b>10 хвилин</b>.
 
-Разом із підготовкою та вдяганням костюма закладіть, будь ласка, близько години."""
+Разом заняття триває 30 хвилин."""
 
 INCLUDED = """<b>✅ Що входить у вартість</b>
 
 • Персональне заняття з тренером 1:1
 • EMS-костюм і форма для тренування
-• Вода у студії
+• Лімфодренажний масаж (10 хв)
 
 Із собою потрібне лише змінне взуття."""
 
@@ -127,22 +127,11 @@ INCLUDED = """<b>✅ Що входить у вартість</b>
 INFO_ANSWERS: tuple[InfoAnswer, ...] = (
     InfoAnswer(id="prices", button="Ціни", answer=PRICES),
     InfoAnswer(id="location", button="Де ми знаходимось?", answer=LOCATION),
-    # The 30 minutes is solid — it is the session length on the site and the
-    # studio's own slot length. The "about an hour in total" line is drafted.
-    InfoAnswer(
-        id="duration",
-        button="Скільки триває EMS-тренування?",
-        answer=DURATION,
-        drafted=True,
-    ),
-    # Assembled from the site's «Потрібне лише змінне взуття — форму видаємо»
-    # and its (drafted) FAQ answer about what the studio provides.
-    InfoAnswer(
-        id="included",
-        button="Що входить у вартість?",
-        answer=INCLUDED,
-        drafted=True,
-    ),
+    # The 20 + 10 split came from the studio directly. Note it contradicts the
+    # website, which presents the whole 30 minutes as EMS — see the mismatch
+    # recorded in docs/CURRENT_STATE.md.
+    InfoAnswer(id="duration", button="Скільки триває EMS-тренування?", answer=DURATION),
+    InfoAnswer(id="included", button="Що входить у вартість?", answer=INCLUDED),
 )
 
 INFO_BY_BUTTON: dict[str, InfoAnswer] = {a.button: a for a in INFO_ANSWERS}

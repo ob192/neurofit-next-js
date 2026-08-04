@@ -158,7 +158,37 @@ Unintentional defects. Deliberate trade-offs are in
    past it.
 
 None of the three break the happy path; all three make the calendar look
-untrustworthy at the edges.
+untrustworthy at the edges — and all three are in the dormant calendar, so
+none of them is reachable today.
+
+### The site and the bot disagree about the session — **live**
+
+On 2026-08-04 the studio confirmed the real shape of a session: **20 minutes of
+EMS, then a 10-minute lymphatic-drainage massage**, 30 minutes in total. The bot
+says exactly that. The website still presents the whole 30 minutes as EMS:
+
+- `content/hero.ts` — "30 хвилин EMS дають навантаження, порівнянне з 2 годинами
+  у звичайному залі", and the proof numerals beside it
+- `content/whyEms.ts` — "30 хв · тривалість заняття"
+- `content/services.ts` — `durationMinutes: 30` and the "30 хв" tag on EMS
+- `content/faq.ts` — the `session-length` answer, still `drafted`, is now known
+  to be wrong on both counts: it claims 30 minutes of EMS *and* "close to an
+  hour" in total, which the studio has since removed from the bot
+
+A visitor who reads the page and then asks the bot gets two different answers.
+Correcting it is a **marketing decision, not a typo fix** — the "30 хвилин = 2
+години" claim is the page's strongest argument and restating it at 20 minutes
+changes what is being claimed. The studio has to choose the wording; the FAQ
+answer should be corrected regardless, since it is drafted, wrong, and shipped
+as `FAQPage` structured data.
+
+### Лімфодренажний масаж is priced *and* included — **live**
+
+`content/pricing.ts` lists "Лімфодренажний масаж — 450 грн" as a single service,
+while the bot's «Що входить у вартість» says the 10-minute massage is included
+in the session. Both came from the studio. Presumably the 450 грн buys a longer
+standalone massage, but nothing says so, and a client reading both bot answers
+sees a plain contradiction. Needs one clarifying qualifier from the studio.
 
 ## Mocked / not real
 
