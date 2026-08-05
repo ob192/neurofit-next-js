@@ -7,7 +7,9 @@
 
 services:
   bot:
-    image: ${DOCKER_USER:-sasha192bunin}/neurofit-bot:${TAG:-latest}
+    # Pin a version rather than `latest`, so a restart is not a silent upgrade
+    # to whatever was pushed last. `make deploy` publishes this tag.
+    image: ${DOCKER_USER:-sasha192bunin}/neurofit-bot:${VERSION:-latest}
     build:
       context: ./bot
     container_name: neurofit-bot

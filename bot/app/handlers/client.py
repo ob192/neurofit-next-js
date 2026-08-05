@@ -12,7 +12,15 @@ from aiogram import F, Router
 from aiogram.filters import CommandObject, CommandStart
 from aiogram.types import CallbackQuery, Message
 
-from ..content import BOOKING_BUTTON, Format, find_format, messages, studio
+from ..content import (
+    BOOKING_BUTTON,
+    INFO_BUTTONS,
+    INFO_BY_BUTTON,
+    Format,
+    find_format,
+    messages,
+    studio,
+)
 from ..keyboards import BookFormat, booking_keyboard, formats_keyboard
 from ..relay import Relay
 from ..storage import Client
@@ -66,6 +74,24 @@ async def on_booking_button(message: Message, relay: Relay) -> None:
 
     await relay.log_to_studio(client, studio.TAPPED_BOOKING_BUTTON)
     await relay.say(client, messages.BOOKING, formats_keyboard())
+
+
+@router.message(F.text.in_(INFO_BUTTONS))
+async def on_info_button(message: Message, relay: Relay) -> None:
+    """Answers one of the four standing questions.
+
+    Registered above the catch-all below, so these never reach a manager as raw
+    text — the topic gets a one-line marker instead.
+    """
+    info = INFO_BY_BUTTON.get(message.text or "")
+    if info is None or message.from_user is None:
+        return
+
+    client = await relay.ensure_client(message.chat.id, message.from_user)
+    if client is None:
+        return
+
+    await relay.send_answer(client, info)
 
 
 @router.callback_query(BookFormat.filter())

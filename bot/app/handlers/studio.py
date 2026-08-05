@@ -59,7 +59,7 @@ async def on_manager_message(message: Message, bot: Bot, relay: Relay) -> None:
     if topic_id is None:
         return  # The General thread, which belongs to no client.
 
-    client = relay.client_for_topic(topic_id)
+    client = await relay.client_for_topic(topic_id)
     if client is None:
         return  # A topic the studio opened by hand. Not ours to relay.
 

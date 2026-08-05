@@ -5,7 +5,7 @@ in the studio's group chat. Managers answer from that topic; the client sees a
 normal reply from the bot. Nobody hands out a personal number, and the whole
 history of a client lives in one thread.
 
-Python 3.11+ · [aiogram 3](https://docs.aiogram.dev) · long polling · no database.
+Python 3.11+ · [aiogram 3](https://docs.aiogram.dev) · long polling · Postgres for one small table.
 
 The website (`../web/`) no longer books anything itself — every "Записатися"
 CTA opens this bot. See [`../docs/TELEGRAM_BOOKING.md`](../docs/TELEGRAM_BOOKING.md).
@@ -20,10 +20,29 @@ client writes anything      →  copied into their topic
 manager writes in the topic →  copied to the client
 ```
 
-The client always has one keyboard button, **«Записатися!»**, which re-opens the
-format prompt. `/start ems`, `/start boxing`, `/start stretching` skip the
-prompt — those are the deep links the website's per-service CTAs use, and the id
-matches `web/src/content/services.ts`.
+The keyboard under every message is the menu:
+
+```
+[ Записатися! ]
+[ Ціни ] [ Де ми знаходимось? ]
+[ Скільки триває EMS-тренування? ]
+[ Що входить у вартість? ]
+```
+
+**«Записатися!»** re-opens the format prompt. The four questions are answered by
+the bot from canned text in `content.py` and are **not** forwarded to a manager
+— the topic gets a one-line «Клієнт запитав: …» marker instead, so the studio
+still sees what the client wanted without the price list burying the thread.
+
+«Ціни» replies with **one message per service**, each carrying that service's
+photo, rather than one wall of text: a client is choosing between formats, and
+a list they have to scroll back through to compare is the wrong shape for that.
+The photos live in [`assets/`](assets/README.md) and are uploaded once per
+process — Telegram hands back a `file_id`, and every later send reuses it.
+
+`/start ems`, `/start boxing`, `/start stretching` skip the prompt — those are
+the deep links the website's per-service CTAs use, and the ids match
+`web/src/content/services.ts`.
 
 ## Setup
 
@@ -61,14 +80,56 @@ to fix.
 make build          # local image
 make run            # runs it with bot/.env and a named volume for state
 make login          # docker login as sasha192bunin
-make deploy         # check, then buildx multi-arch → Docker Hub
+make tags           # what a deploy would publish
+make deploy         # check, build, push → Docker Hub
 make up / down / logs
 ```
 
-Published as `sasha192bunin/neurofit-bot`. The token and group id are read at
-run time from `--env-file`, never baked into the image. Leave `BOT_STATE_FILE`
-unset in `.env` when running the image — it already points at `/data/state.json`,
-which is where the volume is mounted.
+### Versions and tags
+
+The version lives in [`VERSION`](VERSION) and is what you deploy. Every deploy
+publishes **three** tags:
+
+| Tag | What it is |
+| --- | --- |
+| `0.1.0` | the version — **this is what you run**. Stable name; moves only when you rebuild that version on purpose. |
+| `0.1.0-a10a373` | the exact build. Never reused, so "which build of 0.1.0 is this?" always has an answer. |
+| `latest` | whatever was pushed last. A convenience, not a deploy target. |
+
+Version first, then the build, because that is the order you reason in: pick a
+version to run, then pin the build of it if you need to be precise.
+
+```bash
+make version                 # what is in VERSION
+make tags                    # what a deploy would publish
+make deploy                  # rebuild and republish the current version
+make deploy VERSION=0.2.0    # release a new one — also writes it to VERSION
+```
+
+**Redeploying the same version is the normal case** — a copy fix, a rebuilt
+base image — and re-running `make deploy` does exactly that: `0.1.0` moves to
+the new build, and the build tag beside it records which one. Bump the version
+when the studio should be able to talk about "the new one".
+
+A build from an unclean tree gets `-dirty` in its build tag. The quick fix at
+9pm is legitimate; it just must not masquerade as a commit.
+
+The bot logs its build on startup, so the answer to "what is running?" is in
+the logs rather than in an inspect of a tag that may since have moved:
+
+```
+@neurofit_booking_bot v0.1.0-a10a373 is listening; studio group -100…
+```
+
+The same values are on the image as OCI labels
+(`org.opencontainers.image.version` and `.revision`).
+
+Published as `sasha192bunin/neurofit-bot`, built for whatever architecture the
+build machine is — so build on one matching the host you deploy to.
+
+The token and group id are read at run time from `--env-file`, never baked into
+the image. Leave `BOT_STATE_FILE` unset in `.env` when running the image: it
+already points at `/data/state.json`, which is where the volume is mounted.
 
 ### As a service
 
@@ -95,13 +156,14 @@ updates, and Telegram answers the loser with a 409.
 ## Layout
 
 ```
+assets/            service photos, converted from the site's gallery
 app/
 ├── __main__.py    entry point: config, startup checks, polling
 ├── config.py      environment, validated once
 ├── content.py     every string the bot sends — the studio edits this file
-├── keyboards.py   the persistent button and the three format buttons
+├── keyboards.py   the keyboard: booking + the four questions
 ├── relay.py       the two-way bridge; all Telegram calls for a client go here
-├── storage.py     chat ↔ topic mapping, one JSON file
+├── storage.py     chat ↔ topic mapping — Postgres, or a JSON file
 └── handlers/
     ├── setup.py   /id — works before the group is configured
     ├── client.py  the private chat
@@ -117,27 +179,69 @@ is why the handlers read like the list at the top of this file.
   it is copied through.
 - **A line starting with `//`** stays in the topic. Use it for internal notes.
 - **Messages in *General*** go nowhere. Only client topics are relayed.
-- **Deleting a topic doesn't delete the client.** The next thing they send
-  re-opens one; the old conversation is gone, though, so prefer closing to
-  deleting.
+- **Closing a topic is safe.** If that client writes again the bot reopens the
+  same thread, so the history stays in one place. Prefer closing to deleting.
+- **Deleting a topic loses the conversation.** The next thing that client sends
+  opens a fresh thread — the bot cannot recover a deleted one, because the Bot
+  API has no way to look topics up.
 
-## State
+## State — and why it matters more than it looks
 
-`data/state.json` — or `/data/state.json` in the container — holds one row per
-client: chat id, topic id, name, and the last format they asked for. Written
-atomically. Override the path with `BOT_STATE_FILE`.
+One row per client: chat id, topic id, name, the last format they asked for.
+That is the whole schema, and it is the most valuable thing the bot owns.
 
-Losing it is recoverable but not free — the topics stay in the group, and the
-next message from a known client opens a **second** topic for them. Back it up
-with the rest of the host's data.
+**The Bot API cannot list forum topics.** So if the bot forgets which topic
+belongs to a client, it cannot look it up — it opens a *new* one, and the old
+conversation is stranded in a thread nobody will read again. A lost mapping is
+not a blank slate; it is a duplicated client.
+
+Two backends:
+
+- **`DATABASE_URL` set → Postgres.** What production uses. Survives a redeploy
+  that forgets to mount a volume, and is shared rather than duplicated if a
+  second instance ever starts. The table is created on first run; an existing
+  JSON file is imported once, so switching over does not lose anyone.
+- **Unset → `BOT_STATE_FILE`**, default `data/state.json`, written atomically.
+  For tests and a laptop. In Docker this needs a volume at `/data` — and
+  `BOT_STATE_FILE` must stay unset there so the image's own path wins.
+
+### Topics are created in exactly two places
+
+1. **No stored record for that chat id** — genuine first contact, *or* the
+   mapping was lost.
+2. **The stored topic will not take a message.** If it is *closed*, the bot
+   reopens it. Only if it is really gone (`message thread not found`) does it
+   open a new one.
+
+If topics are multiplying, the cause is one of: a second instance running, the
+mapping not persisting, or the studio deleting threads. In that order.
+
+### Run exactly one instance
+
+Two processes polling one token fight over `getUpdates`; Telegram answers the
+loser with a 409 and splits updates unpredictably between them.
+
+## Prices are duplicated
+
+`content.py` carries the price list, and so does `web/src/content/pricing.ts`.
+There is no shared source — the two halves of the project share neither a
+language nor a build, and a client asking «Ціни» in a chat wants the numbers in
+the chat rather than a link. **Change one and you must change the other.**
+
+Every answer is currently signed off by the studio, so `INFO_NEEDS_REVIEW` is
+empty. The `drafted` flag stays for the next answer that is assembled from the
+site rather than dictated — it mirrors `faqNeedsReview` on the website, and an
+answer carrying it should be treated as a question, not a fact.
 
 ## Deliberately absent
 
 - **No calendar, no slots, no confirmation.** A manager agrees the time in
   chat. The bot never claims a booking exists.
-- **No answers about price, contraindications or availability.** Anything the
-  client writes goes to a human. A bot improvising on medical suitability for
-  EMS is a liability, not a feature.
-- **No database.** See `storage.py` for why a file is the right size here.
+- **No improvised answers.** The four buttons reply with fixed text the studio
+  controls; everything a client *types* goes to a human. The bot never composes
+  a reply about contraindications, availability or a price it wasn't given.
+- **No schema beyond one table.** Postgres holds the client→topic mapping and
+  nothing else — no message history, no CRM. The conversation lives in Telegram,
+  which is already a better store for it than anything here would be.
 - **No Altegio.** The integration still exists in the website repo, dormant —
   `web/src/archive/README.md` has the restore procedure.

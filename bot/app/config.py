@@ -27,6 +27,10 @@ class Config:
     #: it unset the bot boots into setup mode, answers ``/id`` and nothing else.
     group_chat_id: int | None
     state_file: Path
+    #: Postgres for the client→topic mapping. Unset falls back to `state_file`,
+    #: which is fine for a laptop and a liability for a container without a
+    #: volume — see `storage.py`.
+    database_url: str | None
 
 
 def load_config(env: dict[str, str] | None = None) -> Config:
@@ -57,9 +61,11 @@ def load_config(env: dict[str, str] | None = None) -> Config:
             )
 
     state_file = (source.get("BOT_STATE_FILE") or "").strip() or "data/state.json"
+    database_url = (source.get("DATABASE_URL") or "").strip() or None
 
     return Config(
         token=token,
         group_chat_id=group_chat_id,
         state_file=Path(state_file),
+        database_url=database_url,
     )

@@ -39,8 +39,150 @@ def find_format(format_id: str) -> Format | None:
     return FORMATS_BY_ID.get(format_id.strip())
 
 
-#: The one persistent keyboard button the client always has.
+#: The booking button — the one that was here before the info buttons below.
 BOOKING_BUTTON = "Записатися!"
+
+
+@dataclass(frozen=True, slots=True)
+class Part:
+    """One message. Long answers are several, so each can carry its own photo."""
+
+    #: Sent as HTML. Safe because these are constants with nothing interpolated
+    #: into them — see `Relay.say`, which parses nothing by default.
+    text: str
+    #: Filename in `bot/assets/`, or None for a plain message. When set, `text`
+    #: becomes the photo's caption and must stay under Telegram's 1024-character
+    #: caption limit — `Relay` refuses to truncate a price silently.
+    photo: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class InfoAnswer:
+    """A question the studio is tired of answering by hand."""
+
+    id: str
+    button: str
+    parts: tuple[Part, ...]
+    #: Mirrors `drafted` in `web/src/content/faq.ts`: the wording was assembled
+    #: from the site rather than dictated by the studio, and needs sign-off.
+    #: Everything factual in a drafted answer is traceable to something already
+    #: published on the site; nothing here was invented outright.
+    drafted: bool = False
+
+
+"""
+The price list is duplicated from `web/src/content/pricing.ts`.
+
+That is a real cost and it is taken deliberately: a client asking «Ціни» in a
+chat wants the numbers in the chat, not a link, and the two halves of this
+project do not share a language or a build. **Change one and you must change
+the other.** The per-session figures below all divide exactly; if a package
+stops dividing evenly, say so rather than rounding silently.
+
+One message per service, each with its own photo, rather than one wall of text:
+in a chat a client is choosing between formats, and a price list they have to
+scroll back through to compare is the wrong shape for that.
+
+The photos are in `bot/assets/`, converted from `web/public/images/gallery/`.
+JPEG rather than the site's WebP because WebP is Telegram's *sticker* format
+and `sendPhoto` handles it unreliably. Only pictures whose subject the site
+itself names in `services.ts` are used — see `bot/assets/README.md`.
+"""
+PRICE_EMS = """<b>💰 EMS-тренування</b>
+
+Разові заняття:
+• Основне тренування — 650 грн
+• Пробне тренування — 550 грн
+• Лімфодренажний масаж — 450 грн (з EMS-тренуванням — бонусом)
+
+Абонементи:
+• 4 тренування — 2400 грн (600 грн / заняття, діє 30 днів)
+• 8 тренувань — 4400 грн (550 грн / заняття, заморозка до 7 днів)
+• 12 тренувань — 6000 грн (500 грн / заняття, заморозка до 10 днів) — найвигідніше, економія 23%"""
+
+PRICE_STRETCHING = """<b>🤸 Стретчинг</b>
+
+Разові заняття:
+• Індивідуальне тренування — 500 грн
+• Міні-група — 400 грн (до 5 осіб, ціна за особу)
+
+Абонементи:
+• 4 тренування — 1900 грн (475 грн / заняття)
+• 8 тренувань — 3600 грн (450 грн / заняття)
+• 10 тренувань — 4200 грн (420 грн / заняття) — економія 16%"""
+
+# No prices: the studio never supplied any for boxing — see the note at the top
+# of `pricing.ts`. Do not interpolate them from the EMS rates.
+PRICE_BOXING = """<b>🥊 EMS Бокс</b>
+
+Вартість уточніть, будь ласка, у менеджера — напишіть нам тут у чаті."""
+
+PRICE_ADDONS = """<b>✨ Додаткові послуги</b>
+
+• Тюнінг преса — 250 грн (10 хв)
+• Тюнінг сідниць — 250 грн (10 хв)"""
+
+LOCATION = """<b>📍 Де ми знаходимось</b>
+
+Проспект Перемоги, 119а, Чернігів
+Щоденно 7:00 – 22:00
+Телефон: 063 377 08 88
+
+Google Maps: https://www.google.com/maps?cid=3364450468895833228
+Як знайти вхід: https://www.instagram.com/p/DOGOCjzClqw/"""
+
+DURATION = """<b>⏱ Скільки триває EMS-тренування</b>
+
+Саме тренування — <b>20 хвилин</b>, після нього лімфодренажний масаж — <b>10 хвилин</b> бонусом.
+
+Разом заняття триває 30 хвилин."""
+
+# Scoped to EMS on the studio's instruction: the suit, the kit and the free
+# massage are what an EMS session includes. Nothing is claimed about what a
+# stretching session includes, because nobody has said.
+INCLUDED = """<b>✅ Що входить у вартість</b>
+
+EMS-тренування:
+• Персональне заняття з тренером 1:1
+• EMS-костюм і форма для тренування
+• Лімфодренажний масаж — бонусом
+
+Із собою потрібне лише змінне взуття."""
+
+#: The info buttons, in the order they are drawn on the keyboard.
+INFO_ANSWERS: tuple[InfoAnswer, ...] = (
+    InfoAnswer(
+        id="prices",
+        button="Ціни",
+        parts=(
+            Part(PRICE_EMS, photo="ems.jpg"),
+            Part(PRICE_STRETCHING, photo="stretching.jpg"),
+            Part(PRICE_BOXING, photo="boxing.jpg"),
+            # No photo: nothing in the gallery is identified as ab or glute
+            # tuning, and captioning an unrelated picture would be a small lie.
+            Part(PRICE_ADDONS),
+        ),
+    ),
+    InfoAnswer(id="location", button="Де ми знаходимось?", parts=(Part(LOCATION),)),
+    # The 20 + 10 split came from the studio directly. Note it contradicts the
+    # website, which presents the whole 30 minutes as EMS — see the mismatch
+    # recorded in docs/CURRENT_STATE.md.
+    InfoAnswer(
+        id="duration",
+        button="Скільки триває EMS-тренування?",
+        parts=(Part(DURATION),),
+    ),
+    InfoAnswer(
+        id="included", button="Що входить у вартість?", parts=(Part(INCLUDED),)
+    ),
+)
+
+INFO_BY_BUTTON: dict[str, InfoAnswer] = {a.button: a for a in INFO_ANSWERS}
+INFO_BUTTONS: frozenset[str] = frozenset(INFO_BY_BUTTON)
+
+#: Answers still awaiting the studio's sign-off. The counterpart of
+#: `faqNeedsReview` in `web/src/content/faq.ts`.
+INFO_NEEDS_REVIEW: tuple[InfoAnswer, ...] = tuple(a for a in INFO_ANSWERS if a.drafted)
 
 
 class messages:
@@ -98,6 +240,16 @@ class studio:
 
     STARTED = "ℹ️ Клієнт відкрив бота"
     TAPPED_BOOKING_BUTTON = "ℹ️ Клієнт натиснув «Записатися!»"
+
+    @staticmethod
+    def asked(question: str) -> str:
+        """Stands in for a canned answer in the topic.
+
+        The answers are fixed and managers know them; mirroring the whole price
+        list into a thread would bury the client's own words. What a manager
+        needs from this line is the signal — *this* is what they wanted to know.
+        """
+        return f"ℹ️ Клієнт запитав: {question}"
 
     @staticmethod
     def topic_name(name: str, username: str | None) -> str:

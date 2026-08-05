@@ -10,7 +10,7 @@ from aiogram.types import (
     ReplyKeyboardMarkup,
 )
 
-from .content import BOOKING_BUTTON, FORMATS
+from .content import BOOKING_BUTTON, FORMATS, INFO_BY_BUTTON
 
 
 class BookFormat(CallbackData, prefix="book"):
@@ -20,14 +20,26 @@ class BookFormat(CallbackData, prefix="book"):
 
 
 def booking_keyboard() -> ReplyKeyboardMarkup:
-    """The one button the client always has.
+    """The menu the client always has, under every message the bot sends.
 
-    ``is_persistent`` is what makes it survive the client tapping the collapse
-    arrow — without it the single affordance this bot offers can be dismissed
-    and never comes back on its own.
+    Booking sits alone on the top row — it is the one action, and pairing it
+    with a question would make it just another option. The four info buttons
+    follow, grouped so that the two long captions get a row each rather than
+    being truncated side by side.
+
+    ``is_persistent`` is what makes the keyboard survive the client tapping the
+    collapse arrow; without it the whole menu can be dismissed and never comes
+    back on its own.
     """
+    labels = list(INFO_BY_BUTTON)
+    rows = [[BOOKING_BUTTON]]
+    if labels:
+        # "Ціни" is short enough to share a row; the rest each take one.
+        rows.append(labels[:2])
+        rows.extend([label] for label in labels[2:])
+
     return ReplyKeyboardMarkup(
-        keyboard=[[KeyboardButton(text=BOOKING_BUTTON)]],
+        keyboard=[[KeyboardButton(text=label) for label in row] for row in rows],
         resize_keyboard=True,
         is_persistent=True,
         input_field_placeholder="Напишіть повідомлення…",
