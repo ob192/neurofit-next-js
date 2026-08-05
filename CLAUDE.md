@@ -35,10 +35,12 @@ typecheck`. The build alone will not catch lint errors.
 
 ## Non-negotiables
 
-1. **No CRM, no database, no unrequested external services.** Do not add
-   Supabase, Prisma or any provider SDK unless explicitly asked. The two
-   integrations that exist were both requested by the owner: the Telegram bot
-   (`bot/`, aiogram) and, before it, Altegio.
+1. **No CRM, no unrequested external services.** Do not add Supabase, Prisma or
+   any provider SDK unless explicitly asked. Three integrations exist and all
+   three were requested by the owner: the Telegram bot (`bot/`, aiogram), the
+   Postgres the bot keeps its client→topic mapping in (`DATABASE_URL`, Neon,
+   asyncpg — **bot only**, the website still has no database and no backend),
+   and, before both, Altegio.
 
    **The Altegio integration is dormant, not deleted.** Nothing in the running
    site imports it. Do not "clean it up" — the owner asked for it to be kept so
@@ -153,9 +155,17 @@ to Altegio.
   `bot/app/content.py`. Nothing keeps them in sync, and a stale price quoted in
   chat is worse than one on a page. Update both, and check the per-session
   figures still divide evenly.
-- **Leave `BOT_STATE_FILE` unset in Docker.** The image points it at the
-  `/data` volume; setting it in `.env` overrides that and writes the mapping
-  somewhere unwritable.
+- **Run exactly one bot instance.** Two processes polling one token fight over
+  `getUpdates` — Telegram 409s the loser and splits updates unpredictably
+  between them. Before Postgres that also meant two disjoint state stores and a
+  duplicate topic per client; they share state now, but the fight still drops
+  work. If topics start duplicating, look for a second instance first.
+- **Losing the client→topic mapping costs real money.** The Bot API cannot list
+  forum topics, so a forgotten client gets a *new* topic and their history is
+  stranded. Production keeps it in Postgres for that reason. The JSON fallback
+  (`BOT_STATE_FILE`, used when `DATABASE_URL` is unset) is for tests and
+  laptops — in Docker it needs a volume at `/data`, and `BOT_STATE_FILE` must
+  stay unset so the image's own path wins.
 
 The rest of this list concerns the **dormant** calendar. It is still true, and
 still worth reading before restoring it, but none of it is live today.

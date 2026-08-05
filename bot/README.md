@@ -5,7 +5,7 @@ in the studio's group chat. Managers answer from that topic; the client sees a
 normal reply from the bot. Nobody hands out a personal number, and the whole
 history of a client lives in one thread.
 
-Python 3.11+ · [aiogram 3](https://docs.aiogram.dev) · long polling · no database.
+Python 3.11+ · [aiogram 3](https://docs.aiogram.dev) · long polling · Postgres for one small table.
 
 The website (`../web/`) no longer books anything itself — every "Записатися"
 CTA opens this bot. See [`../docs/TELEGRAM_BOOKING.md`](../docs/TELEGRAM_BOOKING.md).
@@ -163,7 +163,7 @@ app/
 ├── content.py     every string the bot sends — the studio edits this file
 ├── keyboards.py   the keyboard: booking + the four questions
 ├── relay.py       the two-way bridge; all Telegram calls for a client go here
-├── storage.py     chat ↔ topic mapping, one JSON file
+├── storage.py     chat ↔ topic mapping — Postgres, or a JSON file
 └── handlers/
     ├── setup.py   /id — works before the group is configured
     ├── client.py  the private chat
@@ -179,19 +179,47 @@ is why the handlers read like the list at the top of this file.
   it is copied through.
 - **A line starting with `//`** stays in the topic. Use it for internal notes.
 - **Messages in *General*** go nowhere. Only client topics are relayed.
-- **Deleting a topic doesn't delete the client.** The next thing they send
-  re-opens one; the old conversation is gone, though, so prefer closing to
-  deleting.
+- **Closing a topic is safe.** If that client writes again the bot reopens the
+  same thread, so the history stays in one place. Prefer closing to deleting.
+- **Deleting a topic loses the conversation.** The next thing that client sends
+  opens a fresh thread — the bot cannot recover a deleted one, because the Bot
+  API has no way to look topics up.
 
-## State
+## State — and why it matters more than it looks
 
-`data/state.json` — or `/data/state.json` in the container — holds one row per
-client: chat id, topic id, name, and the last format they asked for. Written
-atomically. Override the path with `BOT_STATE_FILE`.
+One row per client: chat id, topic id, name, the last format they asked for.
+That is the whole schema, and it is the most valuable thing the bot owns.
 
-Losing it is recoverable but not free — the topics stay in the group, and the
-next message from a known client opens a **second** topic for them. Back it up
-with the rest of the host's data.
+**The Bot API cannot list forum topics.** So if the bot forgets which topic
+belongs to a client, it cannot look it up — it opens a *new* one, and the old
+conversation is stranded in a thread nobody will read again. A lost mapping is
+not a blank slate; it is a duplicated client.
+
+Two backends:
+
+- **`DATABASE_URL` set → Postgres.** What production uses. Survives a redeploy
+  that forgets to mount a volume, and is shared rather than duplicated if a
+  second instance ever starts. The table is created on first run; an existing
+  JSON file is imported once, so switching over does not lose anyone.
+- **Unset → `BOT_STATE_FILE`**, default `data/state.json`, written atomically.
+  For tests and a laptop. In Docker this needs a volume at `/data` — and
+  `BOT_STATE_FILE` must stay unset there so the image's own path wins.
+
+### Topics are created in exactly two places
+
+1. **No stored record for that chat id** — genuine first contact, *or* the
+   mapping was lost.
+2. **The stored topic will not take a message.** If it is *closed*, the bot
+   reopens it. Only if it is really gone (`message thread not found`) does it
+   open a new one.
+
+If topics are multiplying, the cause is one of: a second instance running, the
+mapping not persisting, or the studio deleting threads. In that order.
+
+### Run exactly one instance
+
+Two processes polling one token fight over `getUpdates`; Telegram answers the
+loser with a 409 and splits updates unpredictably between them.
 
 ## Prices are duplicated
 
@@ -212,6 +240,8 @@ answer carrying it should be treated as a question, not a fact.
 - **No improvised answers.** The four buttons reply with fixed text the studio
   controls; everything a client *types* goes to a human. The bot never composes
   a reply about contraindications, availability or a price it wasn't given.
-- **No database.** See `storage.py` for why a file is the right size here.
+- **No schema beyond one table.** Postgres holds the client→topic mapping and
+  nothing else — no message history, no CRM. The conversation lives in Telegram,
+  which is already a better store for it than anything here would be.
 - **No Altegio.** The integration still exists in the website repo, dormant —
   `web/src/archive/README.md` has the restore procedure.

@@ -24,7 +24,7 @@ from .handlers import client as client_handlers
 from .handlers import setup as setup_handlers
 from .handlers import studio as studio_handlers
 from .relay import Relay
-from .storage import Store
+from .storage import open_store
 
 log = logging.getLogger("app")
 
@@ -95,7 +95,6 @@ async def run_setup_mode(bot: Bot) -> None:
 
 async def run() -> None:
     config = load_config()
-    store = Store.load(config.state_file)
 
     bot = Bot(
         token=config.token,
@@ -104,10 +103,15 @@ async def run() -> None:
         default=DefaultBotProperties(parse_mode=None),
     )
 
+    store = None
     try:
         if config.group_chat_id is None:
             await run_setup_mode(bot)
             return
+
+        # Opened before the group checks so a bad database URL fails at startup
+        # rather than the first time a client writes.
+        store = await open_store(config.database_url, config.state_file)
 
         me = await bot.get_me()
         await verify_group(bot, config.group_chat_id)
@@ -126,16 +130,17 @@ async def run() -> None:
         dispatcher.include_router(studio_handlers.router)
 
         log.info(
-            "@%s v%s is listening; studio group %s, state in %s",
+            "@%s v%s is listening; studio group %s",
             me.username,
             version(),
             config.group_chat_id,
-            config.state_file,
         )
         await dispatcher.start_polling(
             bot, allowed_updates=dispatcher.resolve_used_update_types()
         )
     finally:
+        if store is not None:
+            await store.close()
         await bot.session.close()
 
 
