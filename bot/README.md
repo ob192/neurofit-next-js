@@ -32,9 +32,17 @@ The keyboard under every message is the menu:
 **«Записатися!»** re-opens the format prompt. The four questions are answered by
 the bot from canned text in `content.py` and are **not** forwarded to a manager
 — the topic gets a one-line «Клієнт запитав: …» marker instead, so the studio
-still sees what the client wanted without the price list burying the thread. `/start ems`, `/start boxing`, `/start stretching` skip the
-prompt — those are the deep links the website's per-service CTAs use, and the id
-matches `web/src/content/services.ts`.
+still sees what the client wanted without the price list burying the thread.
+
+«Ціни» replies with **one message per service**, each carrying that service's
+photo, rather than one wall of text: a client is choosing between formats, and
+a list they have to scroll back through to compare is the wrong shape for that.
+The photos live in [`assets/`](assets/README.md) and are uploaded once per
+process — Telegram hands back a `file_id`, and every later send reuses it.
+
+`/start ems`, `/start boxing`, `/start stretching` skip the prompt — those are
+the deep links the website's per-service CTAs use, and the ids match
+`web/src/content/services.ts`.
 
 ## Setup
 
@@ -93,10 +101,11 @@ production rather than `latest`, so a redeploy is a decision instead of a
 side effect of whatever was pushed last.
 
 Published as `sasha192bunin/neurofit-bot`, built for whatever architecture the
-build machine is — so build on one matching the host you deploy to. The token and group id are read at
-run time from `--env-file`, never baked into the image. Leave `BOT_STATE_FILE`
-unset in `.env` when running the image — it already points at `/data/state.json`,
-which is where the volume is mounted.
+build machine is — so build on one matching the host you deploy to.
+
+The token and group id are read at run time from `--env-file`, never baked into
+the image. Leave `BOT_STATE_FILE` unset in `.env` when running the image: it
+already points at `/data/state.json`, which is where the volume is mounted.
 
 ### As a service
 
@@ -123,11 +132,12 @@ updates, and Telegram answers the loser with a 409.
 ## Layout
 
 ```
+assets/            service photos, converted from the site's gallery
 app/
 ├── __main__.py    entry point: config, startup checks, polling
 ├── config.py      environment, validated once
 ├── content.py     every string the bot sends — the studio edits this file
-├── keyboards.py   the persistent button and the three format buttons
+├── keyboards.py   the keyboard: booking + the four questions
 ├── relay.py       the two-way bridge; all Telegram calls for a client go here
 ├── storage.py     chat ↔ topic mapping, one JSON file
 └── handlers/
@@ -166,9 +176,10 @@ There is no shared source — the two halves of the project share neither a
 language nor a build, and a client asking «Ціни» in a chat wants the numbers in
 the chat rather than a link. **Change one and you must change the other.**
 
-Two answers are marked `drafted=True` (`INFO_NEEDS_REVIEW`), mirroring
-`faqNeedsReview` on the site: their wording was assembled from what the site
-already publishes rather than dictated by the studio, and needs sign-off.
+Every answer is currently signed off by the studio, so `INFO_NEEDS_REVIEW` is
+empty. The `drafted` flag stays for the next answer that is assembled from the
+site rather than dictated — it mirrors `faqNeedsReview` on the website, and an
+answer carrying it should be treated as a question, not a fact.
 
 ## Deliberately absent
 

@@ -44,14 +44,25 @@ BOOKING_BUTTON = "Записатися!"
 
 
 @dataclass(frozen=True, slots=True)
+class Part:
+    """One message. Long answers are several, so each can carry its own photo."""
+
+    #: Sent as HTML. Safe because these are constants with nothing interpolated
+    #: into them — see `Relay.say`, which parses nothing by default.
+    text: str
+    #: Filename in `bot/assets/`, or None for a plain message. When set, `text`
+    #: becomes the photo's caption and must stay under Telegram's 1024-character
+    #: caption limit — `Relay` refuses to truncate a price silently.
+    photo: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
 class InfoAnswer:
     """A question the studio is tired of answering by hand."""
 
     id: str
     button: str
-    #: Sent as HTML. Safe because these are constants with nothing interpolated
-    #: into them — see `Relay.say`, which parses nothing by default.
-    answer: str
+    parts: tuple[Part, ...]
     #: Mirrors `drafted` in `web/src/content/faq.ts`: the wording was assembled
     #: from the site rather than dictated by the studio, and needs sign-off.
     #: Everything factual in a drafted answer is traceable to something already
@@ -68,12 +79,17 @@ project do not share a language or a build. **Change one and you must change
 the other.** The per-session figures below all divide exactly; if a package
 stops dividing evenly, say so rather than rounding silently.
 
-Boxing has no prices here because the studio never supplied any — see the note
-at the top of `pricing.ts`. Do not interpolate them from the EMS rates.
-"""
-PRICES = """<b>💰 Ціни</b>
+One message per service, each with its own photo, rather than one wall of text:
+in a chat a client is choosing between formats, and a price list they have to
+scroll back through to compare is the wrong shape for that.
 
-<b>EMS-тренування</b>
+The photos are in `bot/assets/`, converted from `web/public/images/gallery/`.
+JPEG rather than the site's WebP because WebP is Telegram's *sticker* format
+and `sendPhoto` handles it unreliably. Only pictures whose subject the site
+itself names in `services.ts` are used — see `bot/assets/README.md`.
+"""
+PRICE_EMS = """<b>💰 EMS-тренування</b>
+
 Разові заняття:
 • Основне тренування — 650 грн
 • Пробне тренування — 550 грн
@@ -82,9 +98,10 @@ PRICES = """<b>💰 Ціни</b>
 Абонементи:
 • 4 тренування — 2400 грн (600 грн / заняття, діє 30 днів)
 • 8 тренувань — 4400 грн (550 грн / заняття, заморозка до 7 днів)
-• 12 тренувань — 6000 грн (500 грн / заняття, заморозка до 10 днів) — найвигідніше, економія 23%
+• 12 тренувань — 6000 грн (500 грн / заняття, заморозка до 10 днів) — найвигідніше, економія 23%"""
 
-<b>Стретчинг</b>
+PRICE_STRETCHING = """<b>🤸 Стретчинг</b>
+
 Разові заняття:
 • Індивідуальне тренування — 500 грн
 • Міні-група — 400 грн (до 5 осіб, ціна за особу)
@@ -92,13 +109,18 @@ PRICES = """<b>💰 Ціни</b>
 Абонементи:
 • 4 тренування — 1900 грн (475 грн / заняття)
 • 8 тренувань — 3600 грн (450 грн / заняття)
-• 10 тренувань — 4200 грн (420 грн / заняття) — економія 16%
+• 10 тренувань — 4200 грн (420 грн / заняття) — економія 16%"""
 
-<b>Додаткові послуги</b>
+# No prices: the studio never supplied any for boxing — see the note at the top
+# of `pricing.ts`. Do not interpolate them from the EMS rates.
+PRICE_BOXING = """<b>🥊 EMS Бокс</b>
+
+Вартість уточніть, будь ласка, у менеджера — напишіть нам тут у чаті."""
+
+PRICE_ADDONS = """<b>✨ Додаткові послуги</b>
+
 • Тюнінг преса — 250 грн (10 хв)
-• Тюнінг сідниць — 250 грн (10 хв)
-
-Вартість EMS Боксу уточніть, будь ласка, у менеджера."""
+• Тюнінг сідниць — 250 грн (10 хв)"""
 
 LOCATION = """<b>📍 Де ми знаходимось</b>
 
@@ -115,28 +137,44 @@ DURATION = """<b>⏱ Скільки триває EMS-тренування</b>
 
 Разом заняття триває 30 хвилин."""
 
+# Scoped to EMS on the studio's instruction: the suit, the kit and the free
+# massage are what an EMS session includes. Nothing is claimed about what a
+# stretching session includes, because nobody has said.
 INCLUDED = """<b>✅ Що входить у вартість</b>
 
+EMS-тренування:
 • Персональне заняття з тренером 1:1
 • EMS-костюм і форма для тренування
-• Лімфодренажний масаж 10 хв — бонусом
+• Лімфодренажний масаж — бонусом
 
 Із собою потрібне лише змінне взуття."""
 
 #: The info buttons, in the order they are drawn on the keyboard.
 INFO_ANSWERS: tuple[InfoAnswer, ...] = (
-    InfoAnswer(id="prices", button="Ціни", answer=PRICES),
-    InfoAnswer(id="location", button="Де ми знаходимось?", answer=LOCATION),
+    InfoAnswer(
+        id="prices",
+        button="Ціни",
+        parts=(
+            Part(PRICE_EMS, photo="ems.jpg"),
+            Part(PRICE_STRETCHING, photo="stretching.jpg"),
+            Part(PRICE_BOXING, photo="boxing.jpg"),
+            # No photo: nothing in the gallery is identified as ab or glute
+            # tuning, and captioning an unrelated picture would be a small lie.
+            Part(PRICE_ADDONS),
+        ),
+    ),
+    InfoAnswer(id="location", button="Де ми знаходимось?", parts=(Part(LOCATION),)),
     # The 20 + 10 split came from the studio directly. Note it contradicts the
     # website, which presents the whole 30 minutes as EMS — see the mismatch
     # recorded in docs/CURRENT_STATE.md.
-    #
-    # The massage is a standalone 450 UAH service that comes free with an EMS
-    # session. It therefore appears in both the price list and the what's-
-    # included answer, and says "бонусом" in both — a client who taps the two
-    # buttons in a row must not be left reconciling them.
-    InfoAnswer(id="duration", button="Скільки триває EMS-тренування?", answer=DURATION),
-    InfoAnswer(id="included", button="Що входить у вартість?", answer=INCLUDED),
+    InfoAnswer(
+        id="duration",
+        button="Скільки триває EMS-тренування?",
+        parts=(Part(DURATION),),
+    ),
+    InfoAnswer(
+        id="included", button="Що входить у вартість?", parts=(Part(INCLUDED),)
+    ),
 )
 
 INFO_BY_BUTTON: dict[str, InfoAnswer] = {a.button: a for a in INFO_ANSWERS}

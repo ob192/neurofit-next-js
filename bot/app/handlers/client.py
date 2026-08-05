@@ -91,9 +91,7 @@ async def on_info_button(message: Message, relay: Relay) -> None:
     if client is None:
         return
 
-    await relay.say(
-        client, info.answer, html=True, mirror_as=studio.asked(info.button)
-    )
+    await relay.send_answer(client, info)
 
 
 @router.callback_query(BookFormat.filter())
