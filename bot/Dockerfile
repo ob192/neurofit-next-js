@@ -1,7 +1,12 @@
 # The booking bot: one long-running process, no HTTP surface, no build step.
 FROM python:3.12-slim
 
-ENV PYTHONUNBUFFERED=1 \
+# Set by `make build` to "<version>-<sha>". The bot logs it on startup, so the
+# answer to "which build is running?" is in the logs rather than in an inspect
+# of an image whose tag may since have moved.
+ARG BOT_VERSION=dev
+ENV BOT_VERSION=$BOT_VERSION \
+    PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
     BOT_STATE_FILE=/data/state.json
@@ -13,6 +18,7 @@ WORKDIR /app
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
+COPY VERSION ./
 COPY app ./app
 COPY assets ./assets
 

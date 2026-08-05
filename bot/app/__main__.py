@@ -18,6 +18,7 @@ from aiogram.enums import ChatMemberStatus
 from aiogram.exceptions import TelegramAPIError
 from aiogram.types import BotCommand
 
+from . import version
 from .config import ConfigError, load_config
 from .handlers import client as client_handlers
 from .handlers import setup as setup_handlers
@@ -125,8 +126,9 @@ async def run() -> None:
         dispatcher.include_router(studio_handlers.router)
 
         log.info(
-            "@%s is listening; studio group %s, state in %s",
+            "@%s v%s is listening; studio group %s, state in %s",
             me.username,
+            version(),
             config.group_chat_id,
             config.state_file,
         )

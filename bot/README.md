@@ -85,20 +85,44 @@ make deploy         # check, build, push → Docker Hub
 make up / down / logs
 ```
 
-Every deploy publishes **two** tags: an immutable one and `latest`. The
-immutable tag defaults to the short commit sha (`-dirty` appended if the tree
-has uncommitted changes), so a container in production can always be traced
-back to the code that built it — `latest` alone cannot, because it moves. The
-same commit is recorded in the image's OCI labels:
+### Versions and tags
+
+The version lives in [`VERSION`](VERSION) and is what you deploy. Every deploy
+publishes **three** tags:
+
+| Tag | What it is |
+| --- | --- |
+| `0.1.0` | the version — **this is what you run**. Stable name; moves only when you rebuild that version on purpose. |
+| `0.1.0-a10a373` | the exact build. Never reused, so "which build of 0.1.0 is this?" always has an answer. |
+| `latest` | whatever was pushed last. A convenience, not a deploy target. |
+
+Version first, then the build, because that is the order you reason in: pick a
+version to run, then pin the build of it if you need to be precise.
 
 ```bash
-docker inspect --format '{{index .Config.Labels "org.opencontainers.image.revision"}}' \
-  sasha192bunin/neurofit-bot:latest
+make version                 # what is in VERSION
+make tags                    # what a deploy would publish
+make deploy                  # rebuild and republish the current version
+make deploy VERSION=0.2.0    # release a new one — also writes it to VERSION
 ```
 
-Override for a release name: `make deploy TAG=v1.2`. Pin the immutable tag in
-production rather than `latest`, so a redeploy is a decision instead of a
-side effect of whatever was pushed last.
+**Redeploying the same version is the normal case** — a copy fix, a rebuilt
+base image — and re-running `make deploy` does exactly that: `0.1.0` moves to
+the new build, and the build tag beside it records which one. Bump the version
+when the studio should be able to talk about "the new one".
+
+A build from an unclean tree gets `-dirty` in its build tag. The quick fix at
+9pm is legitimate; it just must not masquerade as a commit.
+
+The bot logs its build on startup, so the answer to "what is running?" is in
+the logs rather than in an inspect of a tag that may since have moved:
+
+```
+@neurofit_booking_bot v0.1.0-a10a373 is listening; studio group -100…
+```
+
+The same values are on the image as OCI labels
+(`org.opencontainers.image.version` and `.revision`).
 
 Published as `sasha192bunin/neurofit-bot`, built for whatever architecture the
 build machine is — so build on one matching the host you deploy to.
