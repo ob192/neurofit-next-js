@@ -20,7 +20,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY VERSION ./
 COPY app ./app
-COPY assets ./assets
 
 # The client→topic mapping must outlive the container. Declared as a volume so
 # `docker run` without `-v` still keeps it out of the writable image layer —

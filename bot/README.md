@@ -34,11 +34,10 @@ the bot from canned text in `content.py` and are **not** forwarded to a manager
 — the topic gets a one-line «Клієнт запитав: …» marker instead, so the studio
 still sees what the client wanted without the price list burying the thread.
 
-«Ціни» replies with **one message per service**, each carrying that service's
-photo, rather than one wall of text: a client is choosing between formats, and
-a list they have to scroll back through to compare is the wrong shape for that.
-The photos live in [`assets/`](assets/README.md) and are uploaded once per
-process — Telegram hands back a `file_id`, and every later send reuses it.
+«Ціни» replies with **one message per service** rather than one wall of text:
+a client is choosing between formats, and a list they have to scroll back
+through to compare is the wrong shape for that. Text only — these messages
+carried the service photo for a while, and four pictures in a row read as noise.
 
 `/start ems`, `/start boxing`, `/start stretching` skip the prompt — those are
 the deep links the website's per-service CTAs use, and the ids match
@@ -156,7 +155,6 @@ updates, and Telegram answers the loser with a 409.
 ## Layout
 
 ```
-assets/            service photos, converted from the site's gallery
 app/
 ├── __main__.py    entry point: config, startup checks, polling
 ├── config.py      environment, validated once

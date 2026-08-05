@@ -20,20 +20,12 @@ from __future__ import annotations
 import logging
 from datetime import UTC, datetime
 from html import escape
-from pathlib import Path
-
 from aiogram import Bot
 from aiogram.enums import ParseMode
 from aiogram.exceptions import TelegramAPIError, TelegramBadRequest
-from aiogram.types import (
-    FSInputFile,
-    InlineKeyboardMarkup,
-    Message,
-    ReplyKeyboardMarkup,
-    User,
-)
+from aiogram.types import InlineKeyboardMarkup, Message, ReplyKeyboardMarkup, User
 
-from .content import InfoAnswer, Part, messages, studio
+from .content import InfoAnswer, messages, studio
 from .keyboards import booking_keyboard
 from .storage import Client, Store
 
@@ -41,12 +33,6 @@ log = logging.getLogger(__name__)
 
 #: How long before the bot says "passed on to a manager" to the same client again.
 ACK_INTERVAL_SECONDS = 30 * 60
-
-#: Service photos, converted from the site's gallery. See `assets/README.md`.
-ASSETS_DIR = Path(__file__).resolve().parent.parent / "assets"
-
-#: Telegram's limit for a photo caption. Message text gets 4096.
-CAPTION_LIMIT = 1024
 
 #: Sentinel for `say(mirror_as=…)`: send to the client, write nothing to the
 #: topic. Used by the canned answers, which log one marker for the whole answer.
@@ -76,9 +62,6 @@ class Relay:
         self._bot = bot
         self._store = store
         self._group_chat_id = group_chat_id
-        #: filename → Telegram file_id, so a photo is uploaded once per process
-        #: rather than once per client who taps «Ціни».
-        self._photo_ids: dict[str, str] = {}
 
     # ---- Topics ---------------------------------------------------------
 
@@ -182,59 +165,9 @@ class Relay:
         them. The parts themselves are never mirrored for the same reason.
         """
         for part in answer.parts:
-            if part.photo is None:
-                await self.say(
-                    client, part.text, html=True, mirror_as=_SKIP_MIRROR
-                )
-            else:
-                await self._send_photo(client, part)
+            await self.say(client, part.text, html=True, mirror_as=_SKIP_MIRROR)
 
         await self.log_to_studio(client, studio.asked(answer.button))
-
-    async def _send_photo(self, client: Client, part: Part) -> None:
-        """Sends one photo with its text as the caption.
-
-        Telegram hands back a `file_id` for anything it has stored, and sending
-        that instead of the bytes turns every repeat into a no-upload call. The
-        cache is per-process and rebuilds itself after a restart, which is why
-        a miss is not an error.
-        """
-        assert part.photo is not None
-
-        if len(part.text) > CAPTION_LIMIT:
-            # Telegram would reject the send outright; better to notice here,
-            # with the offending part named, than to lose an answer in prod.
-            log.error(
-                "caption for %s is %d chars, over Telegram's %d limit",
-                part.photo,
-                len(part.text),
-                CAPTION_LIMIT,
-            )
-            await self.say(client, part.text, html=True, mirror_as=_SKIP_MIRROR)
-            return
-
-        cached = self._photo_ids.get(part.photo)
-        photo: str | FSInputFile = cached or FSInputFile(ASSETS_DIR / part.photo)
-
-        try:
-            sent = await self._bot.send_photo(
-                chat_id=client.chat_id,
-                photo=photo,
-                caption=part.text,
-                parse_mode=ParseMode.HTML,
-                reply_markup=booking_keyboard(),
-            )
-        except TelegramAPIError as error:
-            if cached:
-                # A stale file_id: drop it and let the next attempt re-upload.
-                self._photo_ids.pop(part.photo, None)
-            log.exception("cannot send %s", part.photo)
-            # The prices matter more than the picture — send the text anyway.
-            await self.say(client, part.text, html=True, mirror_as=_SKIP_MIRROR)
-            return
-
-        if sent.photo:
-            self._photo_ids[part.photo] = sent.photo[-1].file_id
 
     async def copy_to_client(self, client: Client, message: Message) -> None:
         """Hands a manager's message to the client.

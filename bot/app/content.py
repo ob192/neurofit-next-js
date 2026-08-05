@@ -45,15 +45,11 @@ BOOKING_BUTTON = "Записатися!"
 
 @dataclass(frozen=True, slots=True)
 class Part:
-    """One message. Long answers are several, so each can carry its own photo."""
+    """One message. Long answers are split into several."""
 
     #: Sent as HTML. Safe because these are constants with nothing interpolated
     #: into them — see `Relay.say`, which parses nothing by default.
     text: str
-    #: Filename in `bot/assets/`, or None for a plain message. When set, `text`
-    #: becomes the photo's caption and must stay under Telegram's 1024-character
-    #: caption limit — `Relay` refuses to truncate a price silently.
-    photo: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -79,14 +75,14 @@ project do not share a language or a build. **Change one and you must change
 the other.** The per-session figures below all divide exactly; if a package
 stops dividing evenly, say so rather than rounding silently.
 
-One message per service, each with its own photo, rather than one wall of text:
-in a chat a client is choosing between formats, and a price list they have to
-scroll back through to compare is the wrong shape for that.
+One message per service rather than one wall of text: in a chat a client is
+choosing between formats, and a price list they have to scroll back through to
+compare is the wrong shape for that.
 
-The photos are in `bot/assets/`, converted from `web/public/images/gallery/`.
-JPEG rather than the site's WebP because WebP is Telegram's *sticker* format
-and `sendPhoto` handles it unreliably. Only pictures whose subject the site
-itself names in `services.ts` are used — see `bot/assets/README.md`.
+Text only. These messages carried the service photo for a while; four pictures
+arriving in a row read as noise rather than as help, and the studio asked for
+them back out. The pictures still do their job on the website, where they are
+looked at rather than scrolled past.
 """
 PRICE_EMS = """<b>💰 EMS-тренування</b>
 
@@ -155,11 +151,9 @@ INFO_ANSWERS: tuple[InfoAnswer, ...] = (
         id="prices",
         button="Ціни",
         parts=(
-            Part(PRICE_EMS, photo="ems.jpg"),
-            Part(PRICE_STRETCHING, photo="stretching.jpg"),
-            Part(PRICE_BOXING, photo="boxing.jpg"),
-            # No photo: nothing in the gallery is identified as ab or glute
-            # tuning, and captioning an unrelated picture would be a small lie.
+            Part(PRICE_EMS),
+            Part(PRICE_STRETCHING),
+            Part(PRICE_BOXING),
             Part(PRICE_ADDONS),
         ),
     ),
