@@ -88,10 +88,9 @@ the bot's compile check.
 
 **Pricing**
 - [x] EMS and stretching price lists, singles + packages, best-value highlighted
-- [ ] **Boxing has no prices.** The studio supplied EMS and stretching only.
-      Boxing renders as a service everywhere but is absent from the pricing
-      section and carries no `Offer` price in the JSON-LD. Do not interpolate a
-      figure from the other two — ask the studio.
+- [x] **Boxing prices** — supplied by the studio on 2026-08-05, quoted for
+      boxing in the EMS suit. Added to `content/pricing.ts` *and* the `PRICES`
+      block in `bot/app/content.py`; nothing keeps those two in sync.
 - [ ] Stretching packages (4/8/10) are assumed to be *individual* sessions:
       4200 ÷ 10 = 420 against the 500 individual rate is the stated 16%, which
       only works off the individual price. Unconfirmed — the mini-group rate of

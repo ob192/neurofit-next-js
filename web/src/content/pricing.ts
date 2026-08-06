@@ -6,8 +6,8 @@ import type { IconName } from '@/components/Icon/Icon';
  * derived except the per-session rate, which is computed from `price` and
  * `sessions` so a package total and its unit price can never drift apart.
  *
- * Boxing is deliberately absent: no prices were supplied for it. Do not
- * interpolate them from the EMS or stretching rates — see docs/CURRENT_STATE.md.
+ * Boxing prices arrived from the studio on 2026-08-05 and are quoted for boxing
+ * done in the EMS suit, which is the only way the studio sells it.
  */
 
 export type PriceItem = {
@@ -91,6 +91,19 @@ export const priceGroups: readonly PriceGroup[] = [
       { name: '4 тренування', price: 1900, sessions: 4 },
       { name: '8 тренувань', price: 3600, sessions: 8 },
       { name: '10 тренувань', price: 4200, sessions: 10, savingPercent: 16, best: true },
+    ],
+  },
+  {
+    id: 'boxing',
+    title: 'EMS Boxing',
+    icon: 'hand',
+    singles: [{ name: 'Разове тренування', price: 600 }],
+    packages: [
+      { name: '4 тренування', price: 2300, sessions: 4 },
+      { name: '8 тренувань', price: 4400, sessions: 8 },
+      // No `savingPercent`: the studio quoted the totals, not a saving. The
+      // per-session line is derived, a percentage would be invented.
+      { name: '12 тренувань', price: 6000, sessions: 12, best: true },
     ],
   },
   {

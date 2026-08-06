@@ -140,10 +140,12 @@ function offerNode(groupTitle: string, item: PriceItem): JsonLdNode {
 /**
  * Catalogue of everything the studio sells.
  *
- * Services with a published price list get a nested catalogue of priced
- * offers; boxing gets a bare Service node because the studio has not supplied
- * prices for it. Do not fill that gap by extrapolating from the other two —
- * marking up a price the studio doesn't charge is worse than marking up none.
+ * Services with a published price list get a nested catalogue of priced offers;
+ * anything the studio has not priced falls through to a bare Service node. All
+ * three formats are priced today — boxing joined them on 2026-08-05 — so the
+ * fallback is currently unused, and it stays because the rule it encodes is the
+ * point: never extrapolate a price. Marking up a figure the studio doesn't
+ * charge is worse than marking up none.
  */
 function offerCatalogNode(): JsonLdNode {
   const priced = new Set(priceGroups.map((group) => group.id));
