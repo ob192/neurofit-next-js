@@ -32,8 +32,11 @@ const CURRENCY = 'UAH';
  * The two images the graph refers to.
  *
  * `logo` and `image` are different claims and used to point at the same file:
- * `image` is what the business looks like — the hero shot, which is rendered on
- * the page — and `logo` is the brand mark search engines put beside the name.
+ * `image` is what the business looks like — the EMS service-card photo, which
+ * is rendered on the page — and `logo` is the brand mark search engines put
+ * beside the name. It was the hero shot until the hero lost its photo; the
+ * constraint that picked the replacement is that the file must appear in the
+ * DOM, not merely exist in `public/`.
  *
  * Both are plain URL strings wherever they appear. schema.org accepts either a
  * URL or an ImageObject for these properties, and a URL sidesteps the two ways
@@ -44,7 +47,7 @@ const CURRENCY = 'UAH';
  * dimensions matter — declares it inline, once.
  */
 const LOGO_URL = `${siteUrl}/web-app-manifest-512x512.png`;
-const IMAGE_URL = `${siteUrl}/images/hero-ems-studio.webp`;
+const IMAGE_URL = `${siteUrl}/images/gallery/1-68.webp`;
 
 function primaryImage(): JsonLdNode {
   return {
@@ -52,8 +55,8 @@ function primaryImage(): JsonLdNode {
     '@id': PRIMARY_IMAGE_ID,
     url: IMAGE_URL,
     contentUrl: IMAGE_URL,
-    width: 1200,
-    height: 1800,
+    width: 853,
+    height: 1280,
     caption: site.description,
     inLanguage: site.lang,
   };

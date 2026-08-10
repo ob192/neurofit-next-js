@@ -14,8 +14,9 @@ export type GalleryTile = {
  * stretching rather than four near-identical kettlebell shots in a row.
  *
  * `1-68`, `1-4` and `img-0631` are deliberately absent: they are the three
- * service-card photos in `content/services.ts`, and `1-69` is the hero. Showing
- * them again here would make the page look shorter on photos than it is.
+ * service-card photos in `content/services.ts`, and showing them again here
+ * would make the page look shorter on photos than it is. `1-69` was held back
+ * for the hero, which no longer carries a photo, so it is free to curate in.
  */
 export const galleryTiles: readonly GalleryTile[] = [
   {
