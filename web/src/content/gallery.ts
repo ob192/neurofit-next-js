@@ -13,7 +13,7 @@ export type GalleryTile = {
  * rather than grouped — a visitor arrowing through gets EMS, boxing and
  * stretching rather than four near-identical kettlebell shots in a row.
  *
- * `1-19`, `1-37` and `img-0631` are deliberately absent: they are the three
+ * `1-68`, `1-4` and `img-0631` are deliberately absent: they are the three
  * service-card photos in `content/services.ts`, and `1-69` is the hero. Showing
  * them again here would make the page look shorter on photos than it is.
  */
@@ -39,8 +39,8 @@ export const galleryTiles: readonly GalleryTile[] = [
     alt: 'Тяга на TRX-петлях в EMS-костюмі',
   },
   {
-    src: '/images/gallery/1-4.webp',
-    alt: 'Розтяжка в шпагаті на килимку',
+    src: '/images/gallery/1-37.webp',
+    alt: 'Нахил убік на занятті зі стретчингу під контролем тренерки',
   },
   {
     src: '/images/gallery/1-89.webp',

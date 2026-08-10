@@ -37,8 +37,8 @@ export const services: readonly Service[] = [
     durationMinutes: 30,
     bookable: true,
     image: {
-      src: '/images/gallery/1-19.webp',
-      alt: 'Клієнтка студії в застебнутому EMS-костюмі з електродами',
+      src: '/images/gallery/1-68.webp',
+      alt: 'Випад із TRX-петлями в EMS-костюмі під вивіскою студії',
     },
   },
   {
@@ -52,8 +52,8 @@ export const services: readonly Service[] = [
     durationMinutes: 60,
     bookable: true,
     image: {
-      src: '/images/gallery/1-37.webp',
-      alt: 'Нахил убік на занятті зі стретчингу під контролем тренерки',
+      src: '/images/gallery/1-4.webp',
+      alt: 'Бічний нахил у поперечному шпагаті на килимку в залі студії',
     },
   },
   {
