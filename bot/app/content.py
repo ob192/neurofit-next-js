@@ -133,11 +133,11 @@ LOCATION = """<b>📍 Де ми знаходимось</b>
 Google Maps: https://www.google.com/maps?cid=3364450468895833228
 Як знайти вхід: https://www.instagram.com/p/DOGOCjzClqw/"""
 
-DURATION = """<b>⏱ Скільки триває EMS-тренування</b>
+DURATION = """<b>⏱ Скільки триває тренування</b>
 
-Саме тренування — <b>20 хвилин</b>, після нього лімфодренажний масаж — <b>10 хвилин</b> бонусом.
+EMS: саме тренування — <b>20 хвилин</b>, після нього лімфодренажний масаж — <b>10 хвилин</b> бонусом. Разом заняття триває 30 хвилин.
 
-Разом заняття триває 30 хвилин."""
+Стретчинг: заняття триває <b>1 годину</b>."""
 
 # Scoped to EMS on the studio's instruction: the suit, the kit and the free
 # massage are what an EMS session includes. Nothing is claimed about what a
@@ -169,7 +169,7 @@ INFO_ANSWERS: tuple[InfoAnswer, ...] = (
     # recorded in docs/CURRENT_STATE.md.
     InfoAnswer(
         id="duration",
-        button="Скільки триває EMS-тренування?",
+        button="Скільки триває тренування?",
         parts=(Part(DURATION),),
     ),
     InfoAnswer(

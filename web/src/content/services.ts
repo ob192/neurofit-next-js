@@ -47,9 +47,9 @@ export const services: readonly Service[] = [
     shortName: 'Стретчинг',
     description:
       'Покращуйте гнучкість, поставу та відновлення тіла у комфортному темпі.',
-    tags: ['Гнучкість', 'Постава', 'Релакс'],
+    tags: ['Гнучкість', 'Постава', 'Релакс', '60 хв'],
     icon: 'move',
-    durationMinutes: 30,
+    durationMinutes: 60,
     bookable: true,
     image: {
       src: '/images/gallery/1-37.webp',
