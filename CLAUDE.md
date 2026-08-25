@@ -140,6 +140,11 @@ the Measurement Protocol. Full write-up: `docs/ANALYTICS.md`.
 - **The `clicks` schema is owned by the bot**, which creates it at startup, and
   written by the site. Deploy the bot first. A missing table degrades to plain
   `t.me` deep links rather than failing.
+- **A production site refuses to boot without the analytics environment.**
+  `src/instrumentation.ts` → `assertAnalyticsConfig()`. Degrading is right for a
+  database that is *down* and wrong for one that was never *configured* — the
+  second never heals and looks identical from outside. Dev only warns;
+  `ANALYTICS_DISABLED=1` is the deliberate opt-out.
 
 ## Booking
 

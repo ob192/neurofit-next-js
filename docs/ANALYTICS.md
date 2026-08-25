@@ -121,6 +121,43 @@ Also true, and easy to trip over:
   message text. Google's terms forbid it, and the studio's record of who this
   person is already lives in Telegram.
 
+## Misconfiguration fails at boot, not at request time
+
+Two different failures produce the same symptom — a CTA redirecting to plain
+`t.me/…?start=ems` — and they deserve opposite treatment.
+
+**A database that is down** is handled in the request: the visitor still reaches
+the bot on the plain deep link, and a warning is logged. That is deliberate. A
+Neon hiccup should cost a row in a report, never a booking.
+
+**A deploy that was never configured** is not a runtime condition, it is a
+mistake, and it never heals. It also presents as everything working: every
+button goes to the right chat, the site looks perfect, and the reports stay
+empty until somebody thinks to read a `Location` header by hand. That is how the
+first deploy of this went out.
+
+So `src/instrumentation.ts` runs `assertAnalyticsConfig()` once at startup and a
+**production server refuses to boot** if it cannot possibly measure anything. It
+names every variable that is wrong and why. Development only warns — the site
+has to stay runnable on a laptop with no database, the same reason the bot has a
+JSON store — and `ANALYTICS_DISABLED=1` is the deliberate opt-out for a preview
+deploy that genuinely should not report.
+
+The check rejects the specific shapes that look valid and are not:
+
+| Rejected | Why it would otherwise pass |
+| --- | --- |
+| `postgres://user:...@host/db` | A password of three dots is a perfectly valid URL. This is a DSN copied out of documentation without substituting the real value — and it is how this rule came to exist |
+| a DSN with no password, no host, or no database | `pg` would accept the string and fail later, per request |
+| `mysql://…` | Wrong protocol, right shape |
+| `GA4_MEASUREMENT_ID=UA-12345` | The old Universal Analytics format. Silently names a cookie that does not exist, so no click ever records a session |
+| an API secret under 10 characters, or containing a placeholder | Ingestion answers `204` to a bad secret exactly as it does to a good one |
+
+**Consequence worth knowing before the next deploy:** the site will not start
+until `DATABASE_URL`, `GA4_MEASUREMENT_ID` and `GA4_API_SECRET` are set on its
+host. That is the point, but it turns a silent measurement gap into a loud
+deploy failure, which is a trade to make on purpose rather than discover.
+
 ## The `clicks` table
 
 Owned by the bot (`bot/app/storage.py`), which creates it at startup along with
@@ -162,6 +199,8 @@ Google's own validation endpoint.
 | Client with no click → no event sent at all | Pass |
 | A bare `put()` cannot clear `click_id`, `qualified_at` or `booked_at` | Pass |
 | `next build`: landing page still static, only `/go/tg` dynamic | Pass |
+| Production boot refused for: nothing set, a `...` placeholder DSN, no password, no database named, `mysql://`, `UA-` measurement id, missing API secret | Pass |
+| Production boot allowed for: a complete configuration, and for `ANALYTICS_DISABLED=1` | Pass |
 
 **Not verified:** ingestion. Every payload above was checked for shape by
 Google's validator, which does not check the API secret — no event has been
