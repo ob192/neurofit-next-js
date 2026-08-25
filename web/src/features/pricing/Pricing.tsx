@@ -8,7 +8,7 @@ import {
   perSessionRate,
   type PriceItem,
 } from '@/content/pricing';
-import { telegramBookingHref } from '@/content/site';
+import { bookingHref } from '@/content/site';
 import { cta } from '@/lib/analytics/gtm';
 import styles from './Pricing.module.css';
 
@@ -103,7 +103,9 @@ export function Pricing() {
       </div>
 
       <ButtonLink
-        href={telegramBookingHref()}
+        href={bookingHref()}
+        target="_blank"
+        rel="noopener"
         variant="ink"
         className={styles.cta}
         {...cta('pricing-book')}

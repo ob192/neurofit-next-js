@@ -2,7 +2,7 @@ import Image from 'next/image';
 import { Icon } from '@/components/Icon/Icon';
 import { Tag, TagList } from '@/components/Tag/Tag';
 import type { Service } from '@/content/services';
-import { telegramBookingHref } from '@/content/site';
+import { bookingHref } from '@/content/site';
 import { cta } from '@/lib/analytics/gtm';
 import styles from './Services.module.css';
 
@@ -30,15 +30,19 @@ export function ServiceCard({ service }: { service: Service }) {
         </TagList>
 
         {/*
-          The service id rides along as the bot's `/start` payload, so the chat
-          opens with this format already chosen — the same job the old
-          `?service=` param did for the on-page booking form.
+          Through `/go/tg`, which logs the click and redirects. The service id
+          survives the hop as the bot's `/start` payload, so the chat still
+          opens with this format already chosen.
+
+          `noopener` without `noreferrer`: the first hop is our own domain, and
+          `noreferrer` would strip the header the redirect reads the campaign
+          parameters from.
         */}
         <a
           className={styles.cardCta}
-          href={telegramBookingHref(service.id)}
+          href={bookingHref(service.id)}
           target="_blank"
-          rel="noopener noreferrer"
+          rel="noopener"
           {...cta(`service-book-${service.id}`)}
         >
           <span>Записатися</span>

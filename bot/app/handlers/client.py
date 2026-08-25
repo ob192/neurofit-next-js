@@ -8,6 +8,8 @@ prices, contraindications or free slots would be answering for the studio.
 
 from __future__ import annotations
 
+from html import escape
+
 from aiogram import F, Router
 from aiogram.filters import CommandObject, CommandStart
 from aiogram.types import CallbackQuery, Message
@@ -23,7 +25,7 @@ from ..content import (
 )
 from ..keyboards import BookFormat, booking_keyboard, formats_keyboard
 from ..relay import Relay
-from ..storage import Client
+from ..storage import Click, Client
 
 router = Router(name="client")
 router.message.filter(F.chat.type == "private")
@@ -34,8 +36,17 @@ async def on_start(message: Message, command: CommandObject, relay: Relay) -> No
     if message.from_user is None:
         return
 
-    # `/start <payload>`: the website's per-format CTAs pass a service id here,
-    # e.g. https://t.me/<bot>?start=ems
+    # `/start <payload>`. Two shapes, and both have to keep working:
+    #
+    #   <click id>  what the site sends now — an opaque id standing for a row in
+    #               the `clicks` table, which is where the format and the
+    #               campaign that produced this visit are written down
+    #   ems         the older, plainer form: the service id itself. Still sent
+    #               when the site could not log the click, and still what a
+    #               hand-written or bookmarked link carries
+    #
+    # A click id is 22 random characters and a format id is one of three known
+    # words, so trying formats first cannot be ambiguous.
     payload = (command.args or "").strip()
     fmt = find_format(payload) if payload else None
 
@@ -47,7 +58,19 @@ async def on_start(message: Message, command: CommandObject, relay: Relay) -> No
     if client is None:
         return
 
+    click: Click | None = None
+    if payload and fmt is None:
+        client, click = await relay.attach_click(client, payload)
+        if click is not None and click.service_id:
+            fmt = find_format(click.service_id)
+
     await relay.log_to_studio(client, studio.STARTED)
+    if click is not None:
+        # Posted into the topic rather than kept for the reports alone: a
+        # manager opening a thread should be able to see that this person came
+        # in on a paid ad, which is worth knowing before answering them.
+        await _log_attribution(relay, client, click)
+
     await relay.say(client, messages.GREETING, booking_keyboard())
 
     if fmt is not None:
@@ -142,7 +165,23 @@ async def _record_request(relay: Relay, client: Client, fmt: Format) -> None:
     """Marks the request in the studio topic and remembers the choice.
 
     This is the one message in a topic that is worth a notification — it is the
-    moment a manager has something to do.
+    moment a manager has something to do. It is also the first stage of the
+    funnel the bot can see for itself: the visitor did not merely open the chat,
+    they said what they want. `generate_lead` was already sent by the website
+    when they clicked; this is the step after it.
     """
     await relay.log_to_studio(client, studio.requested(fmt.name), notify=True)
-    await relay.remember_format(client, fmt.id)
+    client = await relay.remember_format(client, fmt.id)
+    await relay.report_lead(client, "working_lead", {"service_id": fmt.id})
+
+
+async def _log_attribution(relay: Relay, client: Client, click: Click) -> None:
+    """Writes the campaign line into the topic, when there is one to write."""
+    line = studio.attribution(
+        source=escape(click.utm_source) if click.utm_source else None,
+        medium=escape(click.utm_medium) if click.utm_medium else None,
+        campaign=escape(click.utm_campaign) if click.utm_campaign else None,
+        is_ads=bool(click.gclid),
+    )
+    if line:
+        await relay.log_to_studio(client, line)

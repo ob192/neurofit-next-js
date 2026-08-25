@@ -280,6 +280,46 @@ class studio:
     def requested(format_name: str) -> str:
         return f"🆕 <b>Заявка: {format_name}</b>"
 
+    #: Marks the two commands a manager types into a client's topic. Both are
+    #: answered in the thread, never sent to the client.
+    QUALIFIED = "✅ Лід позначено як якісний"
+    CONVERTED = "🎉 Клієнт записався на тренування"
+    ALREADY_MARKED = "ℹ️ Ця позначка вже стоїть"
+    NOT_A_CLIENT_TOPIC = (
+        "Цю команду треба писати в гілці клієнта — тут немає кого позначати."
+    )
+    NO_ATTRIBUTION = (
+        "ℹ️ Позначку збережено, але цей клієнт прийшов не з сайту — "
+        "у статистику реклами вона не потрапить."
+    )
+
+    HELP = (
+        "<b>Команди в гілці клієнта</b>\n"
+        "<code>/qualified</code> — клієнт справді зацікавлений\n"
+        "<code>/booked</code> — клієнт записався на тренування\n"
+        "<code>//</code> на початку рядка — нотатка, клієнту не піде"
+    )
+
+    @staticmethod
+    def attribution(
+        *,
+        source: str | None,
+        medium: str | None,
+        campaign: str | None,
+        is_ads: bool,
+    ) -> str | None:
+        """Where this client came from, for the topic header.
+
+        Only shown when the site actually knew — a blank line saying "невідомо"
+        would be three lines of noise on top of every organic client, who are
+        most of them.
+        """
+        parts = [value for value in (source, medium, campaign) if value]
+        if not parts and not is_ads:
+            return None
+        label = " / ".join(parts) if parts else "Google Ads"
+        return f"📣 Реклама: {label}" if is_ads else f"📣 Джерело: {label}"
+
     @staticmethod
     def bot_said(text: str) -> str:
         """Echo of what the bot said to the client, so the topic is a full record."""

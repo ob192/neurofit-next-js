@@ -30,6 +30,7 @@ Everything here is **deliberate**. Unintentional defects live in
 | 19 | Map is a keyless Google iframe | No API key | Low |
 | 20 | Generated `favicon.svg` not shipped | 6.9 MB raster | Low |
 | 21 | Analytics ship without a consent banner | Not built | **Blocker** |
+| 22 | The website grew a server route and a table | Deliberate | Medium |
 
 ---
 
@@ -409,3 +410,39 @@ looking wrong.
 The booking funnel is the exception: `BookingWidget` is already a client
 component, so it pushes `booking_step` / `booking_submitted` to the dataLayer
 directly, typed as a union in `lib/analytics/gtm.ts`.
+
+## 22. The website grew a server route and a table
+
+**What.** `/go/tg` (`web/src/app/go/tg/route.ts`) is a Next.js route handler
+that writes a row to Postgres and calls Google before redirecting to the bot. It
+is the first server-side anything the website has had, and `clicks` is the first
+table it owns data in. The driver is `pg`, and `DATABASE_URL` is now set for the
+site as well as the bot.
+
+**Why.** Booking happens in a Telegram chat. Until this existed, the studio could
+see how many people clicked an ad and how many people booked, and had no way to
+tell whether they were the same people — which makes every decision about ad
+spend a guess. The click id carried in the `/start` payload is what joins the
+two, and the redirect is where it is minted. Requested by the owner, who chose
+this over the alternative of exposing an HTTP endpoint on the bot.
+
+**What it cost.**
+
+- The rule "the website has no database and no backend" is gone, and
+  `CLAUDE.md` §1 now says what replaced it. Anything beyond a click log needs
+  asking again.
+- A deploy order that did not exist before: the bot owns the `clicks` schema, so
+  it ships first. The site degrades to plain deep links rather than failing, so
+  getting it wrong is quiet — which is its own cost.
+- The site can no longer be served as a purely static export. It was already a
+  server build, so nothing changed in practice, but the option is closed while
+  `/go/tg` exists.
+- One dependency, `pg`. Chosen over the Neon SDK precisely so the endpoint can
+  be tested against a local Postgres and the site stays provider-neutral.
+
+**To undo.** Point `bookingHref()` back at `telegramBookingHref()`, delete
+`src/app/go/`, `src/lib/analytics/clicks.ts` and `attribution.ts`, drop `pg` and
+unset `DATABASE_URL` for the site. The bot keeps working — clients simply arrive
+with no click attached, which is already the normal path for anyone who found the
+bot in Telegram search. `generate_lead` stops, and with it the ability to tie a
+booking to a campaign.

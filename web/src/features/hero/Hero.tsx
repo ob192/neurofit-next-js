@@ -1,7 +1,7 @@
 import { Brand } from '@/components/Brand/Brand';
 import { Icon } from '@/components/Icon/Icon';
 import { hero } from '@/content/hero';
-import { site, telHref, telegramBookingHref } from '@/content/site';
+import { bookingHref, site, telHref } from '@/content/site';
 import { services } from '@/content/services';
 import { cta, trackSection } from '@/lib/analytics/gtm';
 import styles from './Hero.module.css';
@@ -68,9 +68,9 @@ export function Hero() {
             for no gain. */}
         <a
           className={styles.cta}
-          href={telegramBookingHref()}
+          href={bookingHref()}
           target="_blank"
-          rel="noopener noreferrer"
+          rel="noopener"
           {...cta('hero-book')}
         >
           <span>{hero.ctaLabel}</span>

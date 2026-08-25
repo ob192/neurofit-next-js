@@ -16,11 +16,13 @@ from aiogram import Bot, Dispatcher, F
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ChatMemberStatus
 from aiogram.exceptions import TelegramAPIError
-from aiogram.types import BotCommand
+from aiogram.types import BotCommand, BotCommandScopeChat
 
 from . import version
+from .analytics import Analytics
 from .config import ConfigError, load_config
 from .handlers import client as client_handlers
+from .handlers import commands as command_handlers
 from .handlers import setup as setup_handlers
 from .handlers import studio as studio_handlers
 from .relay import Relay
@@ -29,6 +31,14 @@ from .storage import open_store
 log = logging.getLogger("app")
 
 COMMANDS = [BotCommand(command="start", description="Записатись на тренування")]
+
+#: Offered only inside the studio's group, so a client's command menu still
+#: shows one entry and nobody is invited to mark their own lead as booked.
+STUDIO_COMMANDS = [
+    BotCommand(command="qualified", description="Лід якісний"),
+    BotCommand(command="booked", description="Клієнт записався"),
+    BotCommand(command="help", description="Команди в гілці клієнта"),
+]
 
 
 async def verify_group(bot: Bot, group_chat_id: int) -> None:
@@ -103,6 +113,12 @@ async def run() -> None:
         default=DefaultBotProperties(parse_mode=None),
     )
 
+    analytics = Analytics(
+        config.ga4_measurement_id,
+        config.ga4_api_secret,
+        debug=config.ga4_debug,
+    )
+
     store = None
     try:
         if config.group_chat_id is None:
@@ -116,29 +132,46 @@ async def run() -> None:
         me = await bot.get_me()
         await verify_group(bot, config.group_chat_id)
         await bot.set_my_commands(COMMANDS)
+        try:
+            await bot.set_my_commands(
+                STUDIO_COMMANDS, scope=BotCommandScopeChat(chat_id=config.group_chat_id)
+            )
+        except TelegramAPIError:
+            # A convenience, not a requirement: the commands work whether or not
+            # Telegram is willing to list them in the group's menu.
+            log.warning("could not publish the studio commands to the group menu")
 
         # Applied here rather than in the module so the router cannot be wired
         # up without it: relaying an arbitrary group would forward strangers'
         # messages to the studio's clients.
         studio_handlers.router.message.filter(F.chat.id == config.group_chat_id)
 
-        dispatcher = Dispatcher(relay=Relay(bot, store, config.group_chat_id))
+        dispatcher = Dispatcher(
+            relay=Relay(bot, store, config.group_chat_id, analytics)
+        )
         # `/id` first: it is the only handler allowed to answer outside the
-        # studio group, and the studio router would otherwise swallow it.
+        # studio group, and the studio router would otherwise swallow it. The
+        # managers' commands are here for the same reason — the studio router
+        # ignores anything starting with `/`, so it must come last.
         dispatcher.include_router(setup_handlers.router)
+        dispatcher.include_router(command_handlers.router)
         dispatcher.include_router(client_handlers.router)
         dispatcher.include_router(studio_handlers.router)
 
         log.info(
-            "@%s v%s is listening; studio group %s",
+            "@%s v%s is listening; studio group %s; ga4 %s",
             me.username,
             version(),
             config.group_chat_id,
+            "debug" if analytics.enabled and config.ga4_debug
+            else "on" if analytics.enabled
+            else "off",
         )
         await dispatcher.start_polling(
             bot, allowed_updates=dispatcher.resolve_used_update_types()
         )
     finally:
+        await analytics.close()
         if store is not None:
             await store.close()
         await bot.session.close()

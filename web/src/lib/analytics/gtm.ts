@@ -24,6 +24,15 @@ export const GA4_MEASUREMENT_ID = 'G-DHQ8N6RZ39';
  * `booking_submitted` is mapped to GA4's recommended `generate_lead` event
  * inside the container — the dataLayer name describes what happened on the
  * site, the GA4 name is what reports understand.
+ *
+ * **Both events below are dormant.** The only caller is `BookingWidget`, which
+ * left with the calendar, so nothing has pushed them since booking moved to
+ * Telegram. `generate_lead` is now sent server-side by `/go/tg` instead —
+ * see `docs/ANALYTICS.md`.
+ *
+ * If the calendar is ever restored, **retire the container's
+ * `booking_submitted` → `generate_lead` tag first**, or one visitor clicking
+ * through and then booking counts as two conversions.
  */
 export type DataLayerEvent =
   | {
