@@ -2,7 +2,7 @@ import { Section } from '@/components/Section/Section';
 import { Icon } from '@/components/Icon/Icon';
 import { ButtonLink } from '@/components/Button/Button';
 import { services } from '@/content/services';
-import { site, telHref, telegramBookingHref } from '@/content/site';
+import { bookingHref, site, telHref } from '@/content/site';
 import { booking } from '@/content/booking';
 import { cta } from '@/lib/analytics/gtm';
 import styles from './BookingSection.module.css';
@@ -58,7 +58,9 @@ export function BookingSection() {
         </ol>
 
         <ButtonLink
-          href={telegramBookingHref()}
+          href={bookingHref()}
+          target="_blank"
+          rel="noopener"
           variant="ink"
           className={styles.cta}
           {...cta('booking-telegram')}
@@ -73,15 +75,18 @@ export function BookingSection() {
             {services.map((service) => (
               <li key={service.id}>
                 {/*
-                  The service id travels as the bot's `/start` payload, so the
-                  chat opens on the format the visitor pressed. If Telegram
-                  drops the payload the bot just asks — the link still works.
+                  Through `/go/tg`, which logs the click and redirects; the
+                  service id travels on as the bot's `/start` payload, so the
+                  chat opens on the format the visitor pressed. If the click
+                  cannot be logged the redirect falls back to the plain deep
+                  link, and if Telegram drops the payload the bot just asks —
+                  the link still works either way.
                 */}
                 <a
                   className={styles.format}
-                  href={telegramBookingHref(service.id)}
+                  href={bookingHref(service.id)}
                   target="_blank"
-                  rel="noopener noreferrer"
+                  rel="noopener"
                   aria-label={booking.formatAriaLabel(service.name)}
                   {...cta(`booking-telegram-${service.id}`)}
                 >

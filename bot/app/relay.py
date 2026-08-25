@@ -25,14 +25,20 @@ from aiogram.enums import ParseMode
 from aiogram.exceptions import TelegramAPIError, TelegramBadRequest
 from aiogram.types import InlineKeyboardMarkup, Message, ReplyKeyboardMarkup, User
 
+from .analytics import Analytics
 from .content import InfoAnswer, messages, studio
 from .keyboards import booking_keyboard
-from .storage import Client, Store
+from .storage import Click, Client, Store
 
 log = logging.getLogger(__name__)
 
 #: How long before the bot says "passed on to a manager" to the same client again.
 ACK_INTERVAL_SECONDS = 30 * 60
+
+#: GA4's default session timeout. A click older than this belongs to a visit
+#: that has ended, so the events that follow it are sent without a session id
+#: and let GA4 attribute them through its own model — see `analytics.py`.
+GA4_SESSION_TIMEOUT_SECONDS = 30 * 60
 
 #: Sentinel for `say(mirror_as=…)`: send to the client, write nothing to the
 #: topic. Used by the canned answers, which log one marker for the whole answer.
@@ -58,10 +64,17 @@ def _now() -> str:
 
 
 class Relay:
-    def __init__(self, bot: Bot, store: Store, group_chat_id: int) -> None:
+    def __init__(
+        self,
+        bot: Bot,
+        store: Store,
+        group_chat_id: int,
+        analytics: Analytics | None = None,
+    ) -> None:
         self._bot = bot
         self._store = store
         self._group_chat_id = group_chat_id
+        self._analytics = analytics or Analytics(None, None)
 
     # ---- Topics ---------------------------------------------------------
 
@@ -191,6 +204,80 @@ class Relay:
     async def remember_format(self, client: Client, format_id: str) -> Client:
         """Records the last format the client asked for."""
         return await self._store.update(client, last_format=format_id)
+
+    async def mark(self, client: Client, field: str) -> Client:
+        """Stamps one of the manager's marks (`qualified_at`, `booked_at`).
+
+        Written before the event is sent, not after: if GA4 is unreachable the
+        studio's own record still shows the mark, and the alternative — retrying
+        until it lands — is how one booking becomes three conversions.
+        """
+        return await self._store.update(client, **{field: _now()})
+
+    # ---- Attribution ----------------------------------------------------
+
+    async def attach_click(self, client: Client, click_id: str) -> tuple[Client, Click | None]:
+        """Ties this client to the website click they arrived from.
+
+        Returns the client unchanged and ``None`` when the id is not ours: an
+        old link, a forwarded one already claimed by somebody else, or a
+        database that has not been given the table yet. None of those is an
+        error the client should ever hear about — they get the same greeting
+        either way, and the studio simply sees no campaign line in the topic.
+        """
+        if client.click_id == click_id:
+            return client, await self._store.click(click_id)
+
+        click = await self._store.claim_click(click_id, client.chat_id)
+        if click is None:
+            return client, None
+
+        return await self._store.update(client, click_id=click_id), click
+
+    async def report_lead(
+        self, client: Client, event: str, params: dict[str, object] | None = None
+    ) -> None:
+        """Sends one funnel stage to GA4, if this client came from a click.
+
+        The click row is re-read rather than cached on the client: a manager
+        marking a lead may be doing it days later, in a process that has
+        restarted since, and the row is the only place the visitor's GA4
+        identity is written down.
+        """
+        if not client.click_id:
+            return
+
+        click = await self._store.click(client.click_id)
+        if click is None:
+            return
+
+        await self._analytics.send(
+            event,
+            client_id=click.ga_client_id,
+            session_id=self._live_session(click),
+            params={
+                "click_id": click.id,
+                **({"service_id": click.service_id} if click.service_id else {}),
+                **(params or {}),
+            },
+        )
+
+    @staticmethod
+    def _live_session(click: Click) -> str | None:
+        """The GA4 session id, but only while that session is plausibly open.
+
+        Replaying a session id from a visit that ended hours ago tells GA4 the
+        visit is still running, which quietly corrupts session counts and
+        engagement time for the campaign it belongs to. Past the timeout the
+        event is better off carrying no session at all.
+        """
+        if not click.ga_session_id or not click.created_at:
+            return None
+        try:
+            age = datetime.now(UTC) - datetime.fromisoformat(click.created_at)
+        except ValueError:
+            return None
+        return click.ga_session_id if age.total_seconds() < GA4_SESSION_TIMEOUT_SECONDS else None
 
     async def acknowledge(self, client: Client) -> Client:
         """Reassures the client that a human will read what they wrote.

@@ -128,8 +128,35 @@ export const telHref = `tel:${site.phone.e164}`;
  * format can open the chat with that format already chosen. Telegram only
  * accepts `A-Za-z0-9_-` there and silently drops the whole parameter otherwise,
  * so anything else is stripped rather than sent and lost.
+ *
+ * This is the final destination, not what the CTAs point at — see
+ * `bookingHref()` below. The only caller is the redirect handler.
  */
 export function telegramBookingHref(payload?: string): string {
   const start = payload?.replace(/[^A-Za-z0-9_-]/g, '') ?? '';
   return start ? `${site.telegram.url}?start=${start}` : site.telegram.url;
+}
+
+/**
+ * Where a "Записатися" CTA actually points: our own domain, which redirects.
+ *
+ * The hop exists to measure the click. GA4's cookies are first-party and the
+ * `Referer` of a same-origin click carries the landing URL, so `/go/tg` can
+ * read who this visitor is to GA4 and which ad they arrived on — server-side,
+ * with no JavaScript, leaving the server-rendered sections as they are. It
+ * writes a row, and its id becomes the bot's `/start` payload so the
+ * conversation can be tied back to the campaign that paid for it.
+ *
+ * Relative on purpose: an absolute URL to the same origin would work, but a
+ * cross-origin one would drop the cookies and the referrer that are the entire
+ * reason for the detour.
+ *
+ * Links built from this need `rel="noopener"` and **not** `noreferrer` —
+ * `noreferrer` strips the `Referer` header, taking the campaign parameters with
+ * it. There is no window-opener risk to trade against: the first hop is our own
+ * page.
+ */
+export function bookingHref(serviceId?: string): string {
+  const service = serviceId?.replace(/[^a-z]/g, '') ?? '';
+  return service ? `/go/tg?s=${service}` : '/go/tg';
 }

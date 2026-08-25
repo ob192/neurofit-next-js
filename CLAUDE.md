@@ -36,11 +36,25 @@ typecheck`. The build alone will not catch lint errors.
 ## Non-negotiables
 
 1. **No CRM, no unrequested external services.** Do not add Supabase, Prisma or
-   any provider SDK unless explicitly asked. Three integrations exist and all
-   three were requested by the owner: the Telegram bot (`bot/`, aiogram), the
+   any provider SDK unless explicitly asked. Four integrations exist and all
+   four were requested by the owner: the Telegram bot (`bot/`, aiogram), the
    Postgres the bot keeps its client→topic mapping in (`DATABASE_URL`, Neon,
-   asyncpg — **bot only**, the website still has no database and no backend),
-   and, before both, Altegio.
+   asyncpg), the GA4 Measurement Protocol, and, before all of them, Altegio.
+
+   **The website has exactly one server route and one table, and that is the
+   whole of its backend.** `/go/tg` logs a click and redirects to the bot; it
+   writes `clicks` in the same Postgres and sends `generate_lead`. It replaced
+   the rule that used to sit here — "the website has no database and no
+   backend" — on the owner's instruction, so that advertising spend could be
+   measured against bookings that happen in a Telegram chat. `docs/ANALYTICS.md`
+   is the write-up; `docs/CONCESSIONS.md` §22 is the cost.
+
+   That is the extent of it. The landing page is still statically rendered, the
+   site still collects no contact details and still books nothing, and the
+   `clicks` table holds no personal data. Anything past a click log needs asking
+   again. The driver is `pg`, deliberately and not a Neon SDK — a provider SDK
+   is still on the list above, and `pg` is what lets `/go/tg` be tested against
+   a local Postgres.
 
    **The Altegio integration is dormant, not deleted.** Nothing in the running
    site imports it. Do not "clean it up" — the owner asked for it to be kept so
@@ -101,6 +115,32 @@ Path alias is `@/*` → `src/*`.
   `<details>`/`<summary>` on purpose; don't "upgrade" it to a client component.
 - Comments explain *why*, not *what*. Match the density of the surrounding file.
 
+## Analytics
+
+**The conversion is measured on the server, because that is where it happens.**
+Every CTA goes through `/go/tg`, which reads GA4's first-party cookies and the
+campaign parameters off the `Referer`, writes a `clicks` row and hands its id to
+the bot as the `/start` payload. The bot reports the rest of the funnel through
+the Measurement Protocol. Full write-up: `docs/ANALYTICS.md`.
+
+- **Four events, four names**: `generate_lead` (the click, from the site),
+  `working_lead` (a format asked for in the bot), `qualify_lead` and
+  `close_convert_lead` (a manager's `/qualified` and `/booked`). They are all
+  GA4 key events; reusing one name across stages counts one client several
+  times.
+- **`rel="noopener"`, never `noreferrer`, on links built by `bookingHref()`.**
+  `noreferrer` strips the header the campaign parameters are read from.
+- **`client_id` is the browser's, from the click row.** Never invent one — a
+  minted id files the booking as a new user from "direct / none".
+- **`session_id` only on events inside that visit.** `Relay._live_session()`
+  drops it past 30 minutes. Replaying it makes GA4 believe a two-day session is
+  still open.
+- **Nothing identifying goes to GA4.** No name, username, Telegram id or message
+  text. The join lives in Postgres.
+- **The `clicks` schema is owned by the bot**, which creates it at startup, and
+  written by the site. Deploy the bot first. A missing table degrades to plain
+  `t.me` deep links rather than failing.
+
 ## Booking
 
 **Booking is a hand-off to Telegram.** Every "Записатися" CTA on the site is a
@@ -155,6 +195,17 @@ to Altegio.
   `bot/app/content.py`. Nothing keeps them in sync, and a stale price quoted in
   chat is worse than one on a page. Update both, and check the per-session
   figures still divide evenly.
+- **The bot's format ids are also the `clicks.service_id` values.** The site
+  writes `ems`/`boxing`/`stretching` into the click row and the bot reads the
+  format back off it, so the shared vocabulary now has a third place it has to
+  agree — see `docs/ANALYTICS.md`.
+- **`/qualified` and `/booked` must be registered before the studio router.**
+  `studio.on_manager_message` returns early on any line starting with `/`, so a
+  command router placed after it is silently swallowed. Same trap `/id` has, same
+  fix — see `handlers/commands.py`.
+- **A manager's mark reports to GA4 once.** `qualified_at` and `booked_at` are
+  stamped on the client row and coalesced in `put()` so they can only go from
+  unset to set. Clearing one would let the same conversion be counted twice.
 - **Run exactly one bot instance.** Two processes polling one token fight over
   `getUpdates` — Telegram 409s the loser and splits updates unpredictably
   between them. Before Postgres that also meant two disjoint state stores and a

@@ -157,15 +157,17 @@ updates, and Telegram answers the loser with a 409.
 ```
 app/
 ├── __main__.py    entry point: config, startup checks, polling
+├── analytics.py   GA4 Measurement Protocol — the conversions, sent server-side
 ├── config.py      environment, validated once
 ├── content.py     every string the bot sends — the studio edits this file
 ├── keyboards.py   the keyboard: booking + the four questions
 ├── relay.py       the two-way bridge; all Telegram calls for a client go here
-├── storage.py     chat ↔ topic mapping — Postgres, or a JSON file
+├── storage.py     chat ↔ topic mapping, and the website's click log
 └── handlers/
-    ├── setup.py   /id — works before the group is configured
-    ├── client.py  the private chat
-    └── studio.py  the group chat
+    ├── setup.py    /id — works before the group is configured
+    ├── commands.py /qualified and /booked — must be registered before studio.py
+    ├── client.py   the private chat
+    └── studio.py   the group chat
 ```
 
 `handlers/` describes the flow; `relay.py` owns the failure handling. That split
@@ -182,11 +184,34 @@ is why the handlers read like the list at the top of this file.
 - **Deleting a topic loses the conversation.** The next thing that client sends
   opens a fresh thread — the bot cannot recover a deleted one, because the Bot
   API has no way to look topics up.
+- **`/qualified`** in a client's topic marks them a real prospect.
+  **`/booked`** marks that they are coming to a session. Both are answered in
+  the thread and never reach the client. `/help` lists them.
+
+  These two are not paperwork. They are the only way the studio finds out which
+  advertising actually produces clients: everything up to "opened the chat" can
+  be measured automatically, and whether the person was serious is something
+  only the manager talking to them knows. Each mark counts once — typing it
+  twice says so instead of counting a second booking.
+
+  A client who came in some other way — Telegram search, a friend, a business
+  card — gets a note saying the mark was saved but there is no advertising to
+  attribute it to. That is expected, not a fault.
+
+- **A "📣 Реклама" line at the top of a topic** means that client arrived from a
+  paid ad. Worth knowing before you answer them.
 
 ## State — and why it matters more than it looks
 
-One row per client: chat id, topic id, name, the last format they asked for.
-That is the whole schema, and it is the most valuable thing the bot owns.
+One row per client: chat id, topic id, name, the last format they asked for, the
+website click they arrived from and the marks a manager has put on them. It is
+the most valuable thing the bot owns.
+
+The bot also owns the schema of `clicks`, the website's click log, though it
+never writes to it — see [ANALYTICS.md](../docs/ANALYTICS.md). There is one
+migration mechanism in this project and it is `storage.py`, so the table is
+created here. **That means the bot deploys before the website**; a site pointed
+at a database without the table falls back to plain deep links.
 
 **The Bot API cannot list forum topics.** So if the bot forgets which topic
 belongs to a client, it cannot look it up — it opens a *new* one, and the old

@@ -73,9 +73,23 @@ the bot's compile check.
 - [x] GTM `GTM-PB7X3PL2` in `layout.tsx` — snippet in `<head>`, noscript iframe
       immediately after `<body>`, exactly as Google's install page specifies
 - [x] GA4 `G-DHQ8N6RZ39` configured *in the container*, not in the app
-- [x] Conversion: `booking_submitted` → GA4 `generate_lead`, with service,
-      date and time. No name, phone or comment ever reaches the dataLayer
-- [x] Funnel: `booking_step` (service → date → time) from `BookingWidget`
+- [x] **Server-side conversions through the Measurement Protocol.** Four key
+      events — `generate_lead` from `/go/tg`, `working_lead` when a format is
+      asked for in the bot, `qualify_lead` and `close_convert_lead` from a
+      manager's `/qualified` and `/booked`. Full write-up in
+      [ANALYTICS.md](ANALYTICS.md)
+- [x] Click log: `/go/tg` reads GA4's first-party cookies and the campaign
+      parameters off the `Referer`, writes a `clicks` row and passes its id to
+      the bot as the `/start` payload. No JavaScript, landing page still static
+- [ ] ~~Conversion: `booking_submitted` → GA4 `generate_lead`~~ — **was dead.**
+      The only `pushEvent` caller is the dormant `BookingWidget`, so this
+      recorded nothing from the day booking moved to Telegram until the events
+      above were built. **The container tag is still there and should be
+      retired** — if the calendar ever comes back it would double-count
+- [ ] ~~Funnel: `booking_step` (service → date → time)~~ — dormant with the
+      widget, for the same reason
+- [ ] `contact` is not a distinct event: phone, Telegram and Instagram clicks
+      are all `cta_click` with different `cta_id`s. One container tag away
 - [x] Engagement: `cta_click` (11 marked CTAs), `section_view` (all 8
       sections), `scroll_depth` at 25/50/75/90 — all driven by markup
       attributes, so the six server-rendered sections still ship no JavaScript
@@ -120,7 +134,13 @@ Manually, against a running dev server. There is no automated test suite.
 | GA4 `page_view` reaches `/g/collect` with `tid=G-DHQ8N6RZ39` | Pass |
 | `cta_click` fires with correct `cta_id` when a child element is clicked | Pass |
 | `booking_step` reaches GA4 with service/step parameters | Pass |
-| `generate_lead` carries service, date, time — and no personal data | Pass |
+| `generate_lead` carries service, date, time — and no personal data | Pass (dormant widget) |
+| `/go/tg` → 302 to `t.me/<bot>?start=<click id>`; row written with cookies, gclid and UTMs | Pass |
+| MP payloads accepted by Google's validator, with and without `session_id` | Pass |
+| Database down → plain `?start=ems` fallback; back up → recovers with no restart | Pass |
+| Bot claims the click, refuses a second chat presenting the same id | Pass |
+| Two-day-old click → event keeps `client_id`, drops `session_id` | Pass |
+| `next build`: landing page still static, only `/go/tg` dynamic | Pass |
 | All 11 CTA and 8 section markers present in the DOM | Pass |
 | Fonts resolve to Montserrat (headings) / Inter (body) | Pass |
 | No console errors; no hydration warnings | Pass |

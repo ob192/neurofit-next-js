@@ -31,6 +31,15 @@ class Config:
     #: which is fine for a laptop and a liability for a container without a
     #: volume — see `storage.py`.
     database_url: str | None
+    #: GA4 Measurement Protocol. Both unset — the normal state on a laptop —
+    #: means no events are sent and everything else works unchanged. Not
+    #: validated beyond being present: a wrong secret is indistinguishable from
+    #: a right one until Google is asked, which is what `ga4_debug` is for.
+    ga4_measurement_id: str | None
+    ga4_api_secret: str | None
+    #: Sends to Google's validation endpoint and logs its verdict. Nothing is
+    #: recorded while it is on, so it is for wiring up, not for production.
+    ga4_debug: bool
 
 
 def load_config(env: dict[str, str] | None = None) -> Config:
@@ -68,4 +77,7 @@ def load_config(env: dict[str, str] | None = None) -> Config:
         group_chat_id=group_chat_id,
         state_file=Path(state_file),
         database_url=database_url,
+        ga4_measurement_id=(source.get("GA4_MEASUREMENT_ID") or "").strip() or None,
+        ga4_api_secret=(source.get("GA4_API_SECRET") or "").strip() or None,
+        ga4_debug=(source.get("GA4_DEBUG") or "").strip() == "1",
     )
